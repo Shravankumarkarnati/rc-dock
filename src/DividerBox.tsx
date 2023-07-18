@@ -1,76 +1,99 @@
-import * as React from "react";
-import {DockContext, DockContextType} from "./DockData";
-import {Divider, DividerChild} from "./Divider";
+import { useCallback, useRef, FC, useState, memo } from "react";
+import { Divider, DividerChild } from "./Divider";
+import React from "react";
+import { useForceUpdateFC } from "./Hooks";
+
+// This file passes the vibe check (check useCallback with refs)
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  mode?: 'horizontal' | 'vertical';
+  mode?: "horizontal" | "vertical";
 }
 
-export class DividerBox extends React.PureComponent<Props, any> {
-  static contextType = DockContextType;
+export const DividerBox: FC<Props> = memo(
+  ({ mode, children, className, ...rest }: Props) => {
+    const [ref, setRef] = useState<HTMLDivElement | null>(null);
+    const forceUpdate = useForceUpdateFC();
 
-  context!: DockContext;
+    const getRef = useCallback((r: HTMLDivElement) => {
+      setRef(r);
+    }, []);
 
-  _ref: HTMLDivElement;
-  getRef = (r: HTMLDivElement) => {
-    this._ref = r;
-  };
-
-  getDividerData = (idx: number) => {
-    if (!this._ref) {
-      return null;
-    }
-    let {children, mode} = this.props;
-    let nodes = this._ref.childNodes;
-    let length = 1;
-    if (Array.isArray(children)) {
-      length = children.length;
-    }
-    if (nodes.length !== length * 2 - 1) {
-      return;
-    }
-    let dividerChildren: DividerChild[] = [];
-    for (let i = 0; i < length; ++i) {
-      if (mode === 'vertical') {
-        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetHeight});
-      } else {
-        dividerChildren.push({size: (nodes[i * 2] as HTMLElement).offsetWidth});
-      }
-    }
-    return {
-      element: this._ref,
-      beforeDivider: dividerChildren.slice(0, idx),
-      afterDivider: dividerChildren.slice(idx)
-    };
-  };
-  changeSizes = (sizes: number[]) => {
-    let {mode} = this.props;
-    let nodes = this._ref.childNodes;
-    if (nodes.length === sizes.length * 2 - 1) {
-      for (let i = 0; i < sizes.length; ++i) {
-        if (mode === 'vertical') {
-          (nodes[i * 2] as HTMLElement).style.height = `${sizes[i]}px`;
-        } else {
-          (nodes[i * 2] as HTMLElement).style.width = `${sizes[i]}px`;
+    const getDividerData = useCallback(
+      (idx: number) => {
+        if (!ref) {
+          return null;
         }
-      }
-      this.forceUpdate();
-    }
-  };
 
+        let length = 1;
 
-  render(): React.ReactNode {
-    let {children, mode, className, ...others} = this.props;
-    let isVertical = mode === 'vertical';
+        if (Array.isArray(children)) {
+          length = children.length;
+        }
+
+        if (ref.childNodes.length !== length * 2 - 1) {
+          return;
+        }
+
+        let dividerChildren: DividerChild[] = [];
+
+        for (let i = 0; i < length; ++i) {
+          if (mode === "vertical") {
+            dividerChildren.push({
+              size: (ref.childNodes[i * 2] as HTMLElement).offsetHeight,
+            });
+          } else {
+            dividerChildren.push({
+              size: (ref.childNodes[i * 2] as HTMLElement).offsetWidth,
+            });
+          }
+        }
+
+        return {
+          element: ref,
+          beforeDivider: dividerChildren.slice(0, idx),
+          afterDivider: dividerChildren.slice(idx),
+        };
+      },
+      [ref, mode, children]
+    );
+
+    const changeSizes = useCallback(
+      (sizes: number[]) => {
+        if (ref.childNodes.length === sizes.length * 2 - 1) {
+          for (let i = 0; i < sizes.length; ++i) {
+            if (mode === "vertical") {
+              (
+                ref.childNodes[i * 2] as HTMLElement
+              ).style.height = `${sizes[i]}px`;
+            } else {
+              (
+                ref.childNodes[i * 2] as HTMLElement
+              ).style.width = `${sizes[i]}px`;
+            }
+          }
+          forceUpdate();
+        }
+      },
+      [ref, mode, forceUpdate]
+    );
+
+    let isVertical = mode === "vertical";
     let childrenRender: React.ReactNode = [];
-    if (Array.isArray((children))) {
+
+    if (Array.isArray(children)) {
       for (let i = 0; i < children.length; ++i) {
         if (i > 0) {
           (childrenRender as any[]).push(
-            <Divider idx={i} key={i} isVertical={isVertical}
-                     getDividerData={this.getDividerData} changeSizes={this.changeSizes}/>
+            <Divider
+              idx={i}
+              key={i}
+              isVertical={isVertical}
+              getDividerData={getDividerData}
+              changeSizes={changeSizes}
+            />
           );
         }
+
         (childrenRender as any[]).push(children[i]);
       }
     } else {
@@ -78,18 +101,21 @@ export class DividerBox extends React.PureComponent<Props, any> {
     }
 
     let cls: string;
-    if (mode === 'vertical') {
-      cls = 'divider-box dock-vbox';
+
+    if (mode === "vertical") {
+      cls = "divider-box dock-vbox";
     } else {
-      cls = 'divider-box dock-hbox';
+      cls = "divider-box dock-hbox";
     }
+
     if (className) {
       cls = `${cls} ${className}`;
     }
+
     return (
-      <div ref={this.getRef} className={cls} {...others}>
+      <div ref={getRef} className={cls} {...rest}>
         {childrenRender}
       </div>
     );
   }
-}
+);

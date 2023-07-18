@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Filter} from "./Algorithm";
+import { Filter } from "./Algorithm";
 
 export interface TabGroup {
   /**
@@ -8,7 +8,7 @@ export interface TabGroup {
    *
    * default: false
    */
-  floatable?: boolean | 'singleTab';
+  floatable?: boolean | "singleTab";
 
   /**
    * Whether tab can be converted to native window, only works when floatable is true.
@@ -85,9 +85,9 @@ export const defaultGroup: TabGroup = {
   maximizable: true,
 };
 /** @ignore */
-export const placeHolderStyle = 'place-holder';
+export const placeHolderStyle = "place-holder";
 /** @ignore */
-export const maximePlaceHolderId = '-maximized-placeholder-';
+export const maximePlaceHolderId = "-maximized-placeholder-";
 /** @ignore */
 export const placeHolderGroup: TabGroup = {
   floatable: false,
@@ -99,8 +99,12 @@ interface DockDataBase {
   minHeight?: number;
 }
 
-export type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
-
+export type DockMode =
+  | "horizontal"
+  | "vertical"
+  | "float"
+  | "window"
+  | "maximize";
 
 export interface TabBase {
   /**
@@ -180,7 +184,6 @@ export interface BoxData extends BoxBase, BoxChild {
 }
 
 export interface TabData extends TabBase, DockDataBase {
-
   /**
    * - group defines style of the panel
    * - tabs with different tab groups can not be put in same panel
@@ -196,7 +199,6 @@ export interface TabData extends TabBase, DockDataBase {
   title: React.ReactChild;
   content: React.ReactElement | ((tab: TabData) => React.ReactElement);
   closable?: boolean;
-
 
   /**
    * - when value is true: content will always reuse the react component thus allows the component to keep its internal state
@@ -239,7 +241,6 @@ interface PanelLock {
  * a panel is a visiaul container with tabs button in the title bar
  */
 export interface PanelData extends PanelBase, BoxChild {
-
   parent?: BoxData;
 
   tabs: TabData[];
@@ -250,8 +251,6 @@ export interface PanelData extends PanelBase, BoxChild {
    * a locked panel can not be moved to float layer either
    */
   panelLock?: PanelLock; // if not null, panel won't disappear even when all children are gone
-
-
 }
 
 export interface TabPaneCache {
@@ -260,7 +259,6 @@ export interface TabPaneCache {
   owner: any;
   portal?: React.ReactPortal;
 }
-
 
 export interface LayoutData extends LayoutBase {
   /**
@@ -279,7 +277,6 @@ export interface LayoutData extends LayoutBase {
    */
   windowbox?: BoxData;
 
-
   /**
    * The maximized panel,
    * only one child allowed, child must be PanelData
@@ -293,22 +290,21 @@ export interface LayoutData extends LayoutBase {
 }
 
 export type DropDirection =
-  'left'
-  | 'right'
-  | 'bottom'
-  | 'top'
-  | 'middle'
-  | 'remove'
-  | 'before-tab'
-  | 'after-tab'
-  | 'float'
-  | 'front'
-  | 'maximize'
-  | 'new-window'
-  | 'move' // dockbox or float panel moved, or float panel resized
-  | 'active' // become active tab
-  | 'update' // tab updated with updateTab
-  ;
+  | "left"
+  | "right"
+  | "bottom"
+  | "top"
+  | "middle"
+  | "remove"
+  | "before-tab"
+  | "after-tab"
+  | "float"
+  | "front"
+  | "maximize"
+  | "new-window"
+  | "move" // dockbox or float panel moved, or float panel resized
+  | "active" // become active tab
+  | "update"; // tab updated with updateTab
 
 export interface FloatSize {
   width: number;
@@ -324,13 +320,19 @@ export type LayoutSize = FloatSize;
 
 export interface DockContext {
   /** @ignore */
-  getDockId(): any;
+  getDockId(): string;
 
   /** @ignore */
   useEdgeDrop(): boolean;
 
   /** @ignore */
-  setDropRect(element: HTMLElement, direction?: DropDirection, source?: any, event?: {clientX: number, clientY: number}, panelSize?: [number, number]): void;
+  setDropRect(
+    element: HTMLElement,
+    direction?: DropDirection,
+    source?: any,
+    event?: { clientX: number; clientY: number },
+    panelSize?: [number, number]
+  ): void;
 
   /** @ignore */
   getLayoutSize(): LayoutSize;
@@ -360,6 +362,19 @@ export interface DockContext {
     direction: DropDirection,
     floatPosition?: FloatPosition
   ): void;
+
+  /**
+   * Called before closing a tab
+   * @param tabData TabData of the tab being closed
+   * @param closeTab callback to confirm the tab close action
+   */
+  onTabClose(tabData: TabData, closeTab: () => void): void;
+
+  /**
+   * DockPanel calls this whenever there is focus or click event within the panel.
+   * @param panelData panel data of the panel clicked or focused on
+   */
+  onFocusOrClickWithinPanel?(panelData: PanelData): void;
 
   /**
    * Get the TabGroup defined in defaultLayout
@@ -399,10 +414,3 @@ export interface DockContext {
   /** @ignore */
   getRootElement(): HTMLDivElement;
 }
-
-/** @ignore */
-export const DockContextType = React.createContext<DockContext>(null!);
-/** @ignore */
-export const DockContextProvider = DockContextType.Provider;
-/** @ignore */
-export const DockContextConsumer = DockContextType.Consumer;

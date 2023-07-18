@@ -1,9 +1,13 @@
 import {
   BoxData,
   LayoutData,
-  PanelData, BoxBase, LayoutBase, PanelBase, TabBase,
+  PanelData,
+  BoxBase,
+  LayoutBase,
+  PanelBase,
+  TabBase,
   TabData,
-  maximePlaceHolderId
+  maximePlaceHolderId,
 } from "./DockData";
 
 interface DefaultLayoutCache {
@@ -20,30 +24,31 @@ function addPanelToCache(panelData: PanelData, cache: DefaultLayoutCache) {
 
 function addBoxToCache(boxData: BoxData, cache: DefaultLayoutCache) {
   for (let child of boxData.children) {
-    if ('tabs' in child) {
+    if ("tabs" in child) {
       addPanelToCache(child, cache);
-    } else if ('children' in child) {
+    } else if ("children" in child) {
       addBoxToCache(child, cache);
     }
   }
 }
 
-
-export function createLayoutCache(defaultLayout: LayoutData | BoxData): DefaultLayoutCache {
+export function createLayoutCache(
+  defaultLayout: LayoutData | BoxData
+): DefaultLayoutCache {
   let cache: DefaultLayoutCache = {
     panels: new Map(),
     tabs: new Map(),
   };
   if (defaultLayout) {
-    if ('children' in defaultLayout) {
+    if ("children" in defaultLayout) {
       // BoxData
       addBoxToCache(defaultLayout, cache);
     } else {
       // LayoutData
-      if ('dockbox' in defaultLayout) {
+      if ("dockbox" in defaultLayout) {
         addBoxToCache(defaultLayout.dockbox, cache);
       }
-      if ('floatbox' in defaultLayout) {
+      if ("floatbox" in defaultLayout) {
         addBoxToCache(defaultLayout.floatbox, cache);
       }
     }
@@ -58,7 +63,7 @@ export function saveLayoutData(
   afterPanelSaved?: (savedPanel: PanelBase, panel: PanelData) => void
 ): LayoutBase {
   function saveTabData(tabData: TabData): TabBase {
-    return saveTab ? saveTab(tabData) : {id: tabData.id};
+    return saveTab ? saveTab(tabData) : { id: tabData.id };
   }
 
   function savePanelData(panelData: PanelData): PanelBase {
@@ -69,13 +74,16 @@ export function saveLayoutData(
         tabs.push(savedTab);
       }
     }
-    let {id, size, activeId, group} = panelData;
+    let { id, size, activeId, group } = panelData;
     let savedPanel: PanelBase;
-    if (panelData.parent.mode === 'float' || panelData.parent.mode === 'window') {
-      let {x, y, z, w, h} = panelData;
-      savedPanel = {id, size, tabs, group, activeId, x, y, z, w, h};
+    if (
+      panelData.parent.mode === "float" ||
+      panelData.parent.mode === "window"
+    ) {
+      let { x, y, z, w, h } = panelData;
+      savedPanel = { id, size, tabs, group, activeId, x, y, z, w, h };
     } else {
-      savedPanel = {id, size, tabs, group, activeId};
+      savedPanel = { id, size, tabs, group, activeId };
     }
     if (afterPanelSaved) {
       afterPanelSaved(savedPanel, panelData);
@@ -86,14 +94,14 @@ export function saveLayoutData(
   function saveBoxData(boxData: BoxData): BoxBase {
     let children: (BoxBase | PanelBase)[] = [];
     for (let child of boxData.children) {
-      if ('tabs' in child) {
+      if ("tabs" in child) {
         children.push(savePanelData(child));
-      } else if ('children' in child) {
+      } else if ("children" in child) {
         children.push(saveBoxData(child));
       }
     }
-    let {id, size, mode} = boxData;
-    return {id, size, mode, children};
+    let { id, size, mode } = boxData;
+    return { id, size, mode, children };
   }
 
   return {
@@ -116,7 +124,7 @@ export function loadLayoutData(
     if (loadTab) {
       return loadTab(savedTab);
     }
-    let {id} = savedTab;
+    let { id } = savedTab;
     if (cache.tabs.has(id)) {
       return cache.tabs.get(id);
     }
@@ -124,7 +132,7 @@ export function loadLayoutData(
   }
 
   function loadPanelData(savedPanel: PanelBase): PanelData {
-    let {id, size, activeId, x, y, z, w, h, group} = savedPanel;
+    let { id, size, activeId, x, y, z, w, h, group } = savedPanel;
 
     let tabs: TabData[] = [];
     for (let savedTab of savedPanel.tabs) {
@@ -135,16 +143,16 @@ export function loadLayoutData(
     }
     let panelData: PanelData;
     if (w || h || x || y || z) {
-      panelData = {id, size, activeId, group, x, y, z, w, h, tabs};
+      panelData = { id, size, activeId, group, x, y, z, w, h, tabs };
     } else {
-      panelData = {id, size, activeId, group, tabs};
+      panelData = { id, size, activeId, group, tabs };
     }
     if (savedPanel.id === maximePlaceHolderId) {
       panelData.panelLock = {};
     } else if (afterPanelLoaded) {
       afterPanelLoaded(savedPanel, panelData);
     } else if (cache.panels.has(id)) {
-      panelData = {...cache.panels.get(id), ...panelData};
+      panelData = { ...cache.panels.get(id), ...panelData };
     }
     return panelData;
   }
@@ -155,20 +163,26 @@ export function loadLayoutData(
     }
     let children: (BoxData | PanelData)[] = [];
     for (let child of savedBox.children) {
-      if ('tabs' in child) {
+      if ("tabs" in child) {
         children.push(loadPanelData(child));
-      } else if ('children' in child) {
+      } else if ("children" in child) {
         children.push(loadBoxData(child));
       }
     }
-    let {id, size, mode} = savedBox;
-    return {id, size, mode, children};
+    let { id, size, mode } = savedBox;
+    return { id, size, mode, children };
   }
 
   return {
     dockbox: loadBoxData(savedLayout.dockbox),
-    floatbox: loadBoxData(savedLayout.floatbox ?? {mode: 'float', children: [], size: 0}),
-    windowbox: loadBoxData(savedLayout.windowbox ?? {mode: 'window', children: [], size: 0}),
-    maxbox: loadBoxData(savedLayout.maxbox ?? {mode: 'maximize', children: [], size: 1}),
+    floatbox: loadBoxData(
+      savedLayout.floatbox ?? { mode: "float", children: [], size: 0 }
+    ),
+    windowbox: loadBoxData(
+      savedLayout.windowbox ?? { mode: "window", children: [], size: 0 }
+    ),
+    maxbox: loadBoxData(
+      savedLayout.maxbox ?? { mode: "maximize", children: [], size: 1 }
+    ),
   };
 }
