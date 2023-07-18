@@ -23,5 +23,5 @@ export const WindowBox: React.FC<Props & any> = ({ boxData }: Props) => {
     }
   }
 
-  return <>childrenRender</>;
+  return <>{childrenRender}</>;
 };
