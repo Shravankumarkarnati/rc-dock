@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as DragManager from "./DragManager";
-import {GestureState} from "./GestureManager";
+import { GestureState } from "./GestureManager";
+import { FC, useCallback, useEffect, useRef } from "react";
 
 export type AbstractPointerEvent = MouseEvent | TouchEvent;
 
@@ -30,345 +31,440 @@ interface DragDropDivProps extends React.HTMLAttributes<HTMLDivElement> {
   gestureSensitivity?: number;
 }
 
-export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
+export const DragDropDiv: FC<DragDropDivProps & any> = ({
+  getRef,
+  onDragStartT,
+  onDragMoveT,
+  onDragEndT,
+  onDragOverT,
+  onDragLeaveT,
+  onDropT,
+  directDragT,
+  useRightButtonDragT,
+  onGestureStartT,
+  onGestureMoveT,
+  onGestureEndT,
+  gestureSensitivity,
+  children,
+  className,
+  ...rest
+}: DragDropDivProps) => {
+  const element = useRef<HTMLElement>();
+  const ownerDocument = useRef<Document>();
+  const dragType = useRef<DragManager.DragType>(null);
+  const baseX = useRef<number>();
+  const baseY = useRef<number>();
+  const scaleX = useRef<number>();
+  const scaleY = useRef<number>();
+  const baseX2 = useRef<number>();
+  const baseY2 = useRef<number>();
+  const baseDis = useRef<number>();
+  const baseAng = useRef<number>();
+  const waitingMove = useRef<boolean>();
+  const listening = useRef<boolean>();
+  const gesturing = useRef<boolean>();
 
-  element: HTMLElement;
-  ownerDocument: Document;
-  _getRef = (r: HTMLDivElement) => {
-    if (r === this.element) {
-      return;
-    }
-    let {getRef, onDragOverT} = this.props;
-    if (this.element && onDragOverT) {
-      DragManager.removeHandlers(this.element);
-    }
-    this.element = r;
-    if (r) {
-      this.ownerDocument = r.ownerDocument;
-    }
-    if (getRef) {
-      getRef(r);
-    }
-    if (r && onDragOverT) {
-      DragManager.addHandlers(r, this.props);
-    }
-  };
-
-  dragType: DragManager.DragType = null;
-  baseX: number;
-  baseY: number;
-  scaleX: number;
-  scaleY: number;
-  waitingMove = false;
-  listening = false;
-
-  gesturing = false;
-  baseX2: number;
-  baseY2: number;
-  baseDis: number;
-  baseAng: number;
-
-  onPointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-    let nativeTarget = e.nativeEvent.target as HTMLElement;
-    if (nativeTarget instanceof HTMLInputElement || nativeTarget instanceof HTMLTextAreaElement || nativeTarget.classList.contains('drag-ignore')) {
-      // ignore drag from input element
-      return;
-    }
-
-    let {onDragStartT, onGestureStartT, onGestureMoveT, useRightButtonDragT} = this.props;
-    let event = e.nativeEvent;
-    this.cancel();
-    if (event.type === 'touchstart') {
-      // check single or double fingure touch
-      if ((event as TouchEvent).touches.length === 1) {
-        if (onDragStartT) {
-          this.onDragStart(event);
-        }
-      } else if ((event as TouchEvent).touches.length === 2) {
-        if (onGestureStartT && onGestureMoveT) {
-          this.onGestureStart(event as TouchEvent);
-        }
-      }
-    } else if (onDragStartT) {
-      if ((event as MouseEvent).button === 2 && !useRightButtonDragT) {
+  const localGetRef = useCallback(
+    (r: HTMLDivElement) => {
+      if (r === element.current) {
         return;
       }
-      this.onDragStart(event);
-    }
-  };
 
-  onDragStart(event: MouseEvent | TouchEvent) {
-    if (DragManager.isDragging()) {
-      // same pointer event shouldn't trigger 2 drag start
-      return;
-    }
-    let state = new DragManager.DragState(event, this, true);
-    this.baseX = state.pageX;
-    this.baseY = state.pageY;
-
-    let baseElement = this.element.parentElement;
-    let rect = baseElement.getBoundingClientRect();
-    this.scaleX = baseElement.offsetWidth / Math.round(rect.width);
-    this.scaleY = baseElement.offsetHeight / Math.round(rect.height);
-    this.addDragListeners(event);
-    if (this.props.directDragT) {
-      this.executeFirstMove(state);
-    }
-  }
-
-  addDragListeners(event: MouseEvent | TouchEvent) {
-    if (event.type === 'touchstart') {
-      this.ownerDocument.addEventListener('touchmove', this.onTouchMove);
-      this.ownerDocument.addEventListener('touchend', this.onDragEnd);
-      this.dragType = 'touch';
-    } else {
-      this.ownerDocument.addEventListener('mousemove', this.onMouseMove);
-      this.ownerDocument.addEventListener('mouseup', this.onDragEnd);
-      if ((event as MouseEvent).button === 2) {
-        this.dragType = 'right';
-      } else {
-        this.dragType = 'left';
+      if (element && onDragOverT) {
+        DragManager.removeHandlers(element.current);
       }
-    }
-    this.waitingMove = true;
-    this.listening = true;
-  }
-
-  // return true for a valid move
-  checkFirstMove(e: AbstractPointerEvent) {
-    let state = new DragManager.DragState(e, this, true);
-    if (!state.moved()) {
-      // not a move
-      return false;
-    }
-    return this.executeFirstMove(state);
-  }
-
-  executeFirstMove(state: DragManager.DragState): boolean {
-    let {onDragStartT} = this.props;
-
-    this.waitingMove = false;
-    onDragStartT(state);
-    if (!DragManager.isDragging()) {
-      this.onDragEnd();
-      return false;
-    }
-    state._onMove();
-    this.ownerDocument.addEventListener('keydown', this.onKeyDown);
-    return true;
-  }
-
-
-  onMouseMove = (e: MouseEvent) => {
-    let {onDragMoveT} = this.props;
-    if (this.waitingMove) {
-      if (DragManager.isDragging()) {
-        this.onDragEnd();
-        return;
+      element.current = r;
+      if (r) {
+        ownerDocument.current = r.ownerDocument;
       }
-      if (!this.checkFirstMove(e)) {
-        return;
-      }
-    } else {
-      let state = new DragManager.DragState(e, this);
-      state._onMove();
-      if (onDragMoveT) {
-        onDragMoveT(state);
-      }
-    }
-    e.preventDefault();
-  };
+      getRef?.(r);
 
-  onTouchMove = (e: TouchEvent) => {
-    let {onDragMoveT} = this.props;
-    if (this.waitingMove) {
-      if (DragManager.isDragging()) {
-        this.onDragEnd();
-        return;
+      if (r && onDragOverT) {
+        DragManager.addHandlers(r, { onDragLeaveT, onDragOverT, onDropT });
       }
-      if (!this.checkFirstMove(e)) {
-        return;
-      }
-    } else if (e.touches.length !== 1) {
-      this.onDragEnd();
-    } else {
-      let state = new DragManager.DragState(e, this);
-      state._onMove();
-      if (onDragMoveT) {
-        onDragMoveT(state);
-      }
-    }
-    e.preventDefault();
-  };
+    },
+    [
+      getRef,
+      onDragOverT,
+      onDragLeaveT,
+      onDropT,
+      element.current,
+      ownerDocument.current,
+    ]
+  );
 
-  onDragEnd = (e?: TouchEvent | MouseEvent) => {
-    let {onDragEndT} = this.props;
+  const onDragEnd = useCallback((e?: TouchEvent | MouseEvent) => {
     let state = new DragManager.DragState(e, this);
 
-    this.removeListeners();
+    removeListeners();
 
-    if (!this.waitingMove) {
+    if (!waitingMove.current) {
       // e=null means drag is canceled
       state._onDragEnd(e == null);
-      if (onDragEndT) {
-        onDragEndT(state);
-      }
+      onDragEndT?.(state);
     }
 
-    this.cleanupDrag(state);
-  };
+    cleanupDrag(state);
+  }, []);
 
-  addGestureListeners(event: TouchEvent) {
-    this.ownerDocument.addEventListener('touchmove', this.onGestureMove);
-    this.ownerDocument.addEventListener('touchend', this.onGestureEnd);
-    this.ownerDocument.addEventListener('keydown', this.onKeyDown);
-    this.gesturing = true;
-    this.waitingMove = true;
-  }
-
-  onGestureStart(event: TouchEvent) {
-    if (!DragManager.isDragging()) {
-      // same pointer event shouldn't trigger 2 drag start
-      return;
-    }
-    let {onGestureStartT} = this.props;
-
-
-    this.baseX = event.touches[0].pageX;
-    this.baseY = event.touches[0].pageY;
-    this.baseX2 = event.touches[1].pageX;
-    this.baseY2 = event.touches[1].pageY;
-    let baseElement = this.element.parentElement;
-    let rect = baseElement.getBoundingClientRect();
-    this.scaleX = baseElement.offsetWidth / Math.round(rect.width);
-    this.scaleY = baseElement.offsetHeight / Math.round(rect.height);
-    this.baseDis = Math.sqrt(Math.pow(this.baseX - this.baseX2, 2) + Math.pow(this.baseY - this.baseY2, 2));
-    this.baseAng = Math.atan2(this.baseY2 - this.baseY, this.baseX2 - this.baseX);
-
-    let state = new GestureState(event, this, true);
-    if (onGestureStartT(state)) {
-      this.addGestureListeners(event);
-      event.preventDefault();
-    }
-  }
-
-  onGestureMove = (e: TouchEvent) => {
-    let {onGestureMoveT, gestureSensitivity} = this.props;
-    let state = new GestureState(e, this);
-    if (this.waitingMove) {
-      if (!(gestureSensitivity > 0)) {
-        gestureSensitivity = 10; // default sensitivity
-      }
-      if (state.moved() > gestureSensitivity) {
-        this.waitingMove = false;
+  const addDragListeners = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      if (event.type === "touchstart") {
+        ownerDocument.current.addEventListener("touchmove", onTouchMove);
+        ownerDocument.current.addEventListener("touchend", onDragEnd);
+        dragType.current = "touch";
       } else {
+        ownerDocument.current.addEventListener("mousemove", onMouseMove);
+        ownerDocument.current.addEventListener("mouseup", onDragEnd);
+        if ((event as MouseEvent).button === 2) {
+          dragType.current = "right";
+        } else {
+          dragType.current = "left";
+        }
+      }
+      waitingMove.current = true;
+      listening.current = true;
+    },
+    [
+      ownerDocument.current,
+      dragType.current,
+      waitingMove.current,
+      listening.current,
+    ]
+  );
+
+  const executeFirstMove = useCallback(
+    (state: DragManager.DragState): boolean => {
+      waitingMove.current = false;
+      onDragStartT(state);
+      if (!DragManager.isDragging()) {
+        onDragEnd();
+        return false;
+      }
+      state._onMove();
+      ownerDocument.current.addEventListener("keydown", onKeyDown);
+      return true;
+    },
+    [waitingMove.current, onDragStartT, onDragEnd, ownerDocument.current]
+  );
+
+  // return true for a valid move
+  const checkFirstMove = useCallback(
+    (e: AbstractPointerEvent) => {
+      let state = new DragManager.DragState(e, this, true);
+      if (!state.moved()) {
+        // not a move
+        return false;
+      }
+      return executeFirstMove(state);
+    },
+    [executeFirstMove]
+  );
+
+  const onMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (waitingMove.current) {
+        if (DragManager.isDragging()) {
+          onDragEnd();
+          return;
+        }
+        if (!checkFirstMove(e)) {
+          return;
+        }
+      } else {
+        let state = new DragManager.DragState(e, this);
+        state._onMove();
+        onDragMoveT?.(state);
+      }
+      e.preventDefault();
+    },
+    [onDragEnd, waitingMove.current, onDragMoveT]
+  );
+
+  const onTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (waitingMove.current) {
+        if (DragManager.isDragging()) {
+          onDragEnd();
+          return;
+        }
+        if (!checkFirstMove(e)) {
+          return;
+        }
+      } else if (e.touches.length !== 1) {
+        onDragEnd();
+      } else {
+        let state = new DragManager.DragState(e, this);
+        state._onMove();
+        if (onDragMoveT) {
+          onDragMoveT(state);
+        }
+      }
+      e.preventDefault();
+    },
+    [waitingMove.current, onDragEnd, checkFirstMove, onDragMoveT]
+  );
+
+  const onGestureStart = useCallback(
+    (event: TouchEvent) => {
+      if (!DragManager.isDragging()) {
+        // same pointer event shouldn't trigger 2 drag start
         return;
       }
-    }
-    if (onGestureMoveT) {
-      onGestureMoveT(state);
-    }
-  };
-  onGestureEnd = (e?: TouchEvent) => {
-    let {onGestureEndT} = this.props;
 
-    this.removeListeners();
-    if (onGestureEndT) {
-      onGestureEndT();
-    }
-  };
-  onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      this.cancel();
-    }
-  };
+      baseX.current = event.touches[0].pageX;
+      baseY.current = event.touches[0].pageY;
+      baseX2.current = event.touches[1].pageX;
+      baseY2.current = event.touches[1].pageY;
+      let baseElement = element.current.parentElement;
+      let rect = baseElement.getBoundingClientRect();
+      scaleX.current = baseElement.offsetWidth / Math.round(rect.width);
+      scaleY.current = baseElement.offsetHeight / Math.round(rect.height);
+      baseDis.current = Math.sqrt(
+        Math.pow(baseX.current - baseX2.current, 2) +
+          Math.pow(baseY.current - baseY2.current, 2)
+      );
+      baseAng.current = Math.atan2(
+        baseY2.current - baseY.current,
+        baseX2.current - baseX.current
+      );
 
-  cancel() {
-    if (this.listening) {
-      this.onDragEnd();
-    }
-    if (this.gesturing) {
-      this.onGestureEnd();
-    }
-  }
+      let state = new GestureState(event, this, true);
+      if (onGestureStartT(state)) {
+        addGestureListeners(event);
+        event.preventDefault();
+      }
+    },
+    [
+      baseX.current,
+      baseY.current,
+      baseX2.current,
+      baseY2.current,
+      element.current,
+      scaleX.current,
+      scaleY.current,
+      baseDis.current,
+      baseAng.current,
+      onGestureStartT,
+      addGestureListeners,
+    ]
+  );
 
-  removeListeners() {
-    if (this.gesturing) {
-      this.ownerDocument.removeEventListener('touchmove', this.onGestureMove);
-      this.ownerDocument.removeEventListener('touchend', this.onGestureEnd);
-    } else if (this.listening) {
-      if (this.dragType === 'touch') {
-        this.ownerDocument.removeEventListener('touchmove', this.onTouchMove);
-        this.ownerDocument.removeEventListener('touchend', this.onDragEnd);
+  const removeListeners = useCallback(() => {
+    if (gesturing.current) {
+      ownerDocument.current.removeEventListener("touchmove", onGestureMove);
+      ownerDocument.current.removeEventListener("touchend", onGestureEnd);
+    } else if (listening.current) {
+      if (dragType.current === "touch") {
+        ownerDocument.current.removeEventListener("touchmove", onTouchMove);
+        ownerDocument.current.removeEventListener("touchend", onDragEnd);
       } else {
-        this.ownerDocument.removeEventListener('mousemove', this.onMouseMove);
-        this.ownerDocument.removeEventListener('mouseup', this.onDragEnd);
+        ownerDocument.current.removeEventListener("mousemove", onMouseMove);
+        ownerDocument.current.removeEventListener("mouseup", onDragEnd);
       }
     }
 
-    this.ownerDocument.removeEventListener('keydown', this.onKeyDown);
-    this.listening = false;
-    this.gesturing = false;
-  }
+    ownerDocument.current.removeEventListener("keydown", onKeyDown);
+    listening.current = false;
+    gesturing.current = false;
+  }, [
+    ownerDocument.current,
+    gesturing.current,
+    dragType.current,
+    listening.current,
+    onGestureMove,
+    onTouchMove,
+    onDragEnd,
+    onMouseMove,
+    onDragEnd,
+    onKeyDown,
+  ]);
 
-  cleanupDrag(state: DragManager.DragState) {
-    this.dragType = null;
-    this.waitingMove = false;
-  }
+  const onGestureEnd = useCallback(
+    (e?: TouchEvent) => {
+      removeListeners();
+      onGestureEndT?.();
+    },
+    [removeListeners, onGestureEndT]
+  );
 
-  render(): React.ReactNode {
-    let {
-      getRef, children, className,
-      directDragT, onDragStartT, onDragMoveT, onDragEndT, onDragOverT, onDragLeaveT, onDropT,
-      onGestureStartT, onGestureMoveT, onGestureEndT, useRightButtonDragT,
-      ...others
-    } = this.props;
-    let onTouchDown = this.onPointerDown;
-    let onMouseDown = this.onPointerDown;
-    if (!onDragStartT) {
-      onMouseDown = null;
-      if (!onGestureStartT) {
-        onTouchDown = null;
-      }
+  const cancel = useCallback(() => {
+    if (listening.current) {
+      onDragEnd();
     }
-    if (onDragStartT || onGestureStartT) {
-      if (className) {
-        className = `${className} drag-initiator`;
-      } else {
-        className = 'drag-initiator';
-      }
+    if (gesturing.current) {
+      onGestureEnd();
     }
+  }, [listening.current, onDragEnd, onGestureEnd]);
 
-    return (
-      <div ref={this._getRef} className={className} {...others} onMouseDown={onMouseDown}
-           onTouchStart={onTouchDown}>
-        {children}
-      </div>
-    );
-  }
+  const onDragStart = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      if (DragManager.isDragging()) {
+        // same pointer event shouldn't trigger 2 drag start
+        return;
+      }
+      let state = new DragManager.DragState(event, this, true);
+      baseX.current = state.pageX;
+      baseY.current = state.pageY;
 
-  componentDidUpdate(prevProps: DragDropDivProps) {
-    let {onDragOverT, onDragEndT, onDragLeaveT} = this.props;
-    if (this.element
-      && (
-        prevProps.onDragOverT !== onDragOverT
-        || prevProps.onDragLeaveT !== onDragLeaveT
-        || prevProps.onDragEndT !== onDragEndT
-      )
-    ) {
+      let baseElement = element.current.parentElement;
+      let rect = baseElement.getBoundingClientRect();
+      scaleX.current = baseElement.offsetWidth / Math.round(rect.width);
+      scaleY.current = baseElement.offsetHeight / Math.round(rect.height);
+      addDragListeners(event);
+      if (directDragT) {
+        executeFirstMove(state);
+      }
+    },
+    [
+      baseX.current,
+      baseY.current,
+      element.current,
+      scaleX.current,
+      scaleY.current,
+      addDragListeners,
+      executeFirstMove,
+    ]
+  );
+
+  const onPointerDown = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      let nativeTarget = e.nativeEvent.target as HTMLElement;
+      if (
+        nativeTarget instanceof HTMLInputElement ||
+        nativeTarget instanceof HTMLTextAreaElement ||
+        nativeTarget.classList.contains("drag-ignore")
+      ) {
+        // ignore drag from input element
+        return;
+      }
+
+      let event = e.nativeEvent;
+      cancel();
+      if (event.type === "touchstart") {
+        // check single or double fingure touch
+        if ((event as TouchEvent).touches.length === 1) {
+          if (onDragStartT) {
+            onDragStart(event);
+          }
+        } else if ((event as TouchEvent).touches.length === 2) {
+          if (onGestureStartT && onGestureMoveT) {
+            onGestureStart(event as TouchEvent);
+          }
+        }
+      } else if (onDragStartT) {
+        if ((event as MouseEvent).button === 2 && !useRightButtonDragT) {
+          return;
+        }
+        onDragStart(event);
+      }
+    },
+    [onDragStartT, onDragStart, onGestureStartT, onGestureMoveT, onGestureStart]
+  );
+
+  const onGestureMove = useCallback(
+    (e: TouchEvent) => {
+      let state = new GestureState(e, this);
+      if (waitingMove.current) {
+        if (!(gestureSensitivity > 0)) {
+          gestureSensitivity = 10; // default sensitivity
+        }
+        if (state.moved() > gestureSensitivity) {
+          waitingMove.current = false;
+        } else {
+          return;
+        }
+      }
+
+      onGestureMoveT?.(state);
+    },
+    [waitingMove.current, gestureSensitivity, onGestureMoveT, onGestureMoveT]
+  );
+
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        cancel();
+      }
+    },
+    [cancel]
+  );
+
+  const addGestureListeners = useCallback(
+    (event: TouchEvent) => {
+      ownerDocument.current.addEventListener("touchmove", onGestureMove);
+      ownerDocument.current.addEventListener("touchend", onGestureEnd);
+      ownerDocument.current.addEventListener("keydown", onKeyDown);
+      gesturing.current = true;
+      waitingMove.current = true;
+    },
+    [
+      ownerDocument.current,
+      onGestureMove,
+      onGestureEnd,
+      onKeyDown,
+      gesturing.current,
+      waitingMove.current,
+    ]
+  );
+
+  const cleanupDrag = useCallback(
+    (state: DragManager.DragState) => {
+      dragType.current = null;
+      waitingMove.current = false;
+    },
+    [dragType.current, waitingMove.current]
+  );
+
+  useCallback(() => {
+    if (element.current) {
       if (onDragOverT) {
-        DragManager.addHandlers(this.element, this.props);
+        DragManager.addHandlers(element.current, {
+          onDragLeaveT,
+          onDragOverT,
+          onDropT,
+        });
       } else {
-        DragManager.removeHandlers(this.element);
+        DragManager.removeHandlers(element.current);
       }
+    }
+  }, [onDragOverT, onDragLeaveT, onDragEndT]);
+
+  useEffect(() => {
+    return () => {
+      if (element.current && onDragOverT) {
+        DragManager.removeHandlers(element.current);
+      }
+      cancel();
+    };
+  }, [onDragOverT]);
+
+  let onTouchDown = onPointerDown;
+  let onMouseDown = onPointerDown;
+
+  if (!onDragStartT) {
+    onMouseDown = null;
+    if (!onGestureStartT) {
+      onTouchDown = null;
+    }
+  }
+  if (onDragStartT || onGestureStartT) {
+    if (className) {
+      className = `${className} drag-initiator`;
+    } else {
+      className = "drag-initiator";
     }
   }
 
-  componentWillUnmount(): void {
-    let {onDragOverT} = this.props;
-    if (this.element && onDragOverT) {
-      DragManager.removeHandlers(this.element);
-    }
-    this.cancel();
-  }
-}
+  return (
+    <div
+      ref={localGetRef}
+      className={className}
+      {...rest}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchDown}
+    >
+      {children}
+    </div>
+  );
+};
