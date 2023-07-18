@@ -1,4 +1,4 @@
-import { FC, useCallback, useRef } from "react";
+import { FC, memo, useCallback, useRef, useState } from "react";
 import React from "react";
 import { DragDropDiv } from "./dragdrop/DragDropDiv";
 import { DragState } from "./dragdrop/DragManager";
@@ -86,110 +86,124 @@ function spiltSize(
   return sizes;
 }
 
-export const Divider: FC<DividerProps & any> = ({
-  idx,
-  className,
-  isVertical,
-  getDividerData,
-  changeSizes,
-  onDragEnd,
-}: DividerProps) => {
-  const boxData = useRef<BoxDataCache>();
+export const Divider: FC<DividerProps> = memo(
+  ({
+    idx,
+    className,
+    isVertical,
+    getDividerData,
+    changeSizes,
+    onDragEnd,
+  }: DividerProps) => {
+    const [boxData, setBoxData] = useState<BoxDataCache>();
 
-  const startDrag = useCallback(
-    (e: DragState) => {
-      boxData.current = new BoxDataCache(getDividerData(idx));
-      e.startDrag(boxData.current.element, null);
-    },
-    [boxData.current]
-  );
-
-  const dragMove = useCallback((e: DragState) => {
-    if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
-      dragMoveAll(e, e.dx, e.dy);
-    } else {
-      dragMove2(e, e.dx, e.dy);
-    }
-  }, []);
-
-  const dragMove2 = useCallback((e: DragState, dx: number, dy: number) => {
-    let { beforeDivider, afterDivider } = boxData.current;
-
-    if (!(beforeDivider.length && afterDivider.length)) {
-      // invalid input
-      return;
-    }
-
-    let d = isVertical ? dy : dx;
-    let leftChild = beforeDivider.at(-1);
-    let rightChild = afterDivider[0];
-    let leftSize = leftChild.size + d;
-    let rightSize = rightChild.size - d; // check min size
-
-    if (d > 0) {
-      if (rightSize < rightChild.minSize) {
-        rightSize = rightChild.minSize;
-        leftSize = leftChild.size + rightChild.size - rightSize;
-      }
-    } else if (leftSize < leftChild.minSize) {
-      leftSize = leftChild.minSize;
-      rightSize = leftChild.size + rightChild.size - leftSize;
-    }
-
-    let sizes = beforeDivider.concat(afterDivider).map((child) => child.size);
-    sizes[beforeDivider.length - 1] = leftSize;
-    sizes[beforeDivider.length] = rightSize;
-    changeSizes(sizes);
-  }, []);
-
-  const dragMoveAll = useCallback((e: DragState, dx: number, dy: number) => {
-    let {
-      beforeSize,
-      beforeMinSize,
-      afterSize,
-      afterMinSize,
-      beforeDivider,
-      afterDivider,
-    } = boxData.current;
-    let d = isVertical ? dy : dx;
-    let newBeforeSize = beforeSize + d;
-    let newAfterSize = afterSize - d; // check total min size
-
-    if (d > 0) {
-      if (newAfterSize < afterMinSize) {
-        newAfterSize = afterMinSize;
-        newBeforeSize = beforeSize + afterSize - afterMinSize;
-      }
-    } else if (newBeforeSize < beforeMinSize) {
-      newBeforeSize = beforeMinSize;
-      newAfterSize = beforeSize + afterSize - beforeMinSize;
-    }
-
-    changeSizes(
-      spiltSize(newBeforeSize, beforeSize, beforeDivider).concat(
-        spiltSize(newAfterSize, afterSize, afterDivider)
-      )
+    const startDrag = useCallback(
+      (e: DragState) => {
+        const data = new BoxDataCache(getDividerData(idx));
+        e.startDrag(data.element, null);
+        setBoxData(data);
+      },
+      [boxData, idx, getDividerData]
     );
-  }, []);
 
-  const dragEnd = useCallback(() => {
-    boxData.current = null;
+    const dragMove2 = useCallback(
+      (e: DragState, dx: number, dy: number) => {
+        let { beforeDivider, afterDivider } = boxData;
 
-    if (onDragEnd) {
-      onDragEnd();
+        if (!(beforeDivider.length && afterDivider.length)) {
+          // invalid input
+          return;
+        }
+
+        let d = isVertical ? dy : dx;
+        let leftChild = beforeDivider.at(-1);
+        let rightChild = afterDivider[0];
+        let leftSize = leftChild.size + d;
+        let rightSize = rightChild.size - d; // check min size
+
+        if (d > 0) {
+          if (rightSize < rightChild.minSize) {
+            rightSize = rightChild.minSize;
+            leftSize = leftChild.size + rightChild.size - rightSize;
+          }
+        } else if (leftSize < leftChild.minSize) {
+          leftSize = leftChild.minSize;
+          rightSize = leftChild.size + rightChild.size - leftSize;
+        }
+
+        let sizes = beforeDivider
+          .concat(afterDivider)
+          .map((child) => child.size);
+        sizes[beforeDivider.length - 1] = leftSize;
+        sizes[beforeDivider.length] = rightSize;
+        changeSizes(sizes);
+      },
+      [boxData, changeSizes]
+    );
+
+    const dragMoveAll = useCallback(
+      (e: DragState, dx: number, dy: number) => {
+        let {
+          beforeSize,
+          beforeMinSize,
+          afterSize,
+          afterMinSize,
+          beforeDivider,
+          afterDivider,
+        } = boxData;
+        let d = isVertical ? dy : dx;
+        let newBeforeSize = beforeSize + d;
+        let newAfterSize = afterSize - d; // check total min size
+
+        if (d > 0) {
+          if (newAfterSize < afterMinSize) {
+            newAfterSize = afterMinSize;
+            newBeforeSize = beforeSize + afterSize - afterMinSize;
+          }
+        } else if (newBeforeSize < beforeMinSize) {
+          newBeforeSize = beforeMinSize;
+          newAfterSize = beforeSize + afterSize - beforeMinSize;
+        }
+
+        changeSizes(
+          spiltSize(newBeforeSize, beforeSize, beforeDivider).concat(
+            spiltSize(newAfterSize, afterSize, afterDivider)
+          )
+        );
+      },
+      [boxData, changeSizes]
+    );
+
+    const dragMove = useCallback(
+      (e: DragState) => {
+        if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
+          dragMoveAll(e, e.dx, e.dy);
+        } else {
+          dragMove2(e, e.dx, e.dy);
+        }
+      },
+      [dragMove2, dragMoveAll]
+    );
+
+    const dragEnd = useCallback(() => {
+      setBoxData(null);
+
+      if (onDragEnd) {
+        onDragEnd();
+      }
+    }, [onDragEnd]);
+
+    if (!className) {
+      className = "dock-divider";
     }
-  }, []);
 
-  if (!className) {
-    className = "dock-divider";
+    return (
+      <DragDropDiv
+        className={className}
+        onDragStartT={startDrag}
+        onDragMoveT={dragMove}
+        onDragEndT={dragEnd}
+      />
+    );
   }
-
-  return (
-    <DragDropDiv
-      className={className}
-      onDragStartT={startDrag}
-      onDragMoveT={dragMove}
-      onDragEndT={dragEnd}
-    />
-  );
-};
+);

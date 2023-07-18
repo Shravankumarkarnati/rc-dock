@@ -6,7 +6,7 @@ interface Props {
   boxData: BoxData;
 }
 
-export const FloatBox: React.FC<Props & any> = ({ boxData }: Props) => {
+export const FloatBox: React.FC<Props> = React.memo(({ boxData }: Props) => {
   let childrenRender: React.ReactNode[] = [];
 
   for (let child of boxData.children) {
@@ -18,4 +18,4 @@ export const FloatBox: React.FC<Props & any> = ({ boxData }: Props) => {
   }
 
   return <div className="dock-box dock-fbox">{childrenRender}</div>;
-};
+});

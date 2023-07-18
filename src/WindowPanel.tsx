@@ -1,12 +1,13 @@
-import { useCallback, useRef } from "react";
+import { memo, useCallback, useRef } from "react";
 import NewWindow from "rc-new-window";
-import { DockContext, PanelData } from "./DockData";
+import { PanelData } from "./DockData";
 import { DockPanel } from "./DockPanel";
 import {
   mapElementToScreenRect,
   mapWindowToElement,
 } from "rc-new-window/lib/ScreenPosition";
 import React from "react";
+import { useDockContext } from "./DockContext";
 
 // This file passes the vibe check
 
@@ -14,8 +15,8 @@ interface Props {
   panelData: PanelData;
 }
 
-export const WindowPanel: React.FC<Props & any> = ({ panelData }) => {
-  const context = useRef<DockContext>();
+export const WindowPanel: React.FC<Props> = memo(({ panelData }) => {
+  const context = useDockContext();
   const window = useRef<Window>();
 
   const onOpen = useCallback(
@@ -28,7 +29,7 @@ export const WindowPanel: React.FC<Props & any> = ({ panelData }) => {
   );
 
   const onUnload = useCallback(() => {
-    let layoutRoot = context.current.getRootElement();
+    let layoutRoot = context.getRootElement();
     const rect = mapWindowToElement(layoutRoot, window.current);
 
     if (rect.width > 0 && rect.height > 0) {
@@ -38,12 +39,12 @@ export const WindowPanel: React.FC<Props & any> = ({ panelData }) => {
       panelData.h = rect.height;
     }
 
-    context.current.dockMove(panelData, null, "float");
+    context.dockMove(panelData, null, "float");
   }, [context, window, panelData]);
 
   const initPopupInnerRect = useCallback(
     () =>
-      mapElementToScreenRect(context.current.getRootElement(), {
+      mapElementToScreenRect(context.getRootElement(), {
         left: panelData.x,
         top: panelData.y,
         width: panelData.w,
@@ -71,4 +72,4 @@ export const WindowPanel: React.FC<Props & any> = ({ panelData }) => {
       </div>
     </NewWindow>
   );
-};
+});

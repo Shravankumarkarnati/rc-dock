@@ -1,26 +1,24 @@
-import React, { FC, useCallback, useRef } from "react";
-import { BoxData, DockContext, DockContextType } from "./DockData";
+import React, { FC, memo, useCallback, useRef } from "react";
+import { BoxData, DockContext } from "./DockData";
 import { Divider, DividerChild } from "./Divider";
 import { DockPanel } from "./DockPanel";
-
-// This file needs to sort out forceUpdate equivalent (check useCallback with refs)
+import { useDockContext } from "./DockContext";
+import { useForceUpdateFC } from "./Hooks";
 
 interface Props {
   size: number;
   boxData: BoxData;
 }
 
-export const DockBox: FC<Props & any> = ({ size, boxData }: Props) => {
-  const context = useRef<DockContext>();
+export const DockBox: FC<Props> = memo(({ size, boxData }: Props) => {
+  const context = useDockContext();
 
   const ref = useRef<HTMLDivElement>();
+  const forceUpdate = useForceUpdateFC();
 
-  const getRef = useCallback(
-    (r: HTMLDivElement) => {
-      ref.current = r;
-    },
-    [ref]
-  );
+  const getRef = useCallback((r: HTMLDivElement) => {
+    ref.current = r;
+  }, []);
 
   const getDividerData = useCallback(
     (idx: number) => {
@@ -66,13 +64,13 @@ export const DockBox: FC<Props & any> = ({ size, boxData }: Props) => {
       for (let i = 0; i < boxData.children.length; ++i) {
         boxData.children[i].size = sizes[i];
       }
-      // mikeyg: Need to forceUpdate here
+      forceUpdate();
     },
-    [boxData]
+    [boxData, forceUpdate]
   );
 
   const onDragEnd = useCallback(() => {
-    context.current.onSilentChange(null, "move");
+    context.onSilentChange(null, "move");
   }, [context]);
 
   let isVertical = boxData.mode === "vertical";
@@ -144,4 +142,4 @@ export const DockBox: FC<Props & any> = ({ size, boxData }: Props) => {
       {childrenRender}
     </div>
   );
-};
+});

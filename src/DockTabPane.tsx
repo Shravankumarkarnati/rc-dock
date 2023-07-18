@@ -1,67 +1,71 @@
 import * as React from "react";
 import classNames from "classnames";
-import { DockContext, DockContextType, TabPaneCache } from "./DockData";
+import { DockContext, TabPaneCache } from "./DockData";
 import { TabPaneProps } from "rc-tabs";
+import { useDockContext } from "./DockContext";
 
 interface DockTabPaneProps extends TabPaneProps {
   cacheId?: string;
   cached: boolean;
 }
 
-export default class DockTabPane extends React.PureComponent<
-  DockTabPaneProps,
-  any
-> {
-  static contextType = DockContextType;
+const DockTabPane: React.FC<DockTabPaneProps> = React.memo(
+  ({
+    cacheId,
+    cached,
+    prefixCls,
+    forceRender,
+    className,
+    style,
+    id,
+    active,
+    animated,
+    destroyInactiveTabPane,
+    tabKey,
+    children,
+  }) => {
+    const { removeTabCache, updateTabCache, getTabCache } = useDockContext();
+    const _ref = React.useRef<null | HTMLDivElement>(null);
+    const _cache = React.useRef<null | TabPaneCache>(null);
 
-  context!: DockContext;
+    const getRef = React.useCallback((r: HTMLDivElement) => {
+      _ref.current = r;
+    }, []);
 
-  _ref: HTMLDivElement;
-  getRef = (r: HTMLDivElement) => {
-    this._ref = r;
-  };
-
-  updateCache() {
-    const { cached, children, cacheId } = this.props;
-    if (this._cache) {
-      if (!cached || cacheId !== this._cache.id) {
-        this.context.removeTabCache(this._cache.id, this);
-        this._cache = null;
+    const updateCache = React.useCallback(() => {
+      if (_cache.current) {
+        if (!cached || cacheId !== _cache.current.id) {
+          removeTabCache(_cache.current.id, this);
+          _cache.current = null;
+        }
       }
-    }
-    if (cached && this._ref) {
-      this._cache = this.context.getTabCache(cacheId, this);
-      if (!this._ref.contains(this._cache.div)) {
-        this._ref.appendChild(this._cache.div);
+      if (cached && _ref) {
+        _cache.current = getTabCache(cacheId, this);
+        if (!_ref.current.contains(_cache.current.div)) {
+          _ref.current.appendChild(_cache.current.div);
+        }
+        updateTabCache(_cache.current.id, children);
       }
-      this.context.updateTabCache(this._cache.id, children);
-    }
-  }
+    }, [removeTabCache, updateTabCache, getTabCache]);
 
-  visited: boolean;
+    React.useEffect(() => {
+      updateCache();
 
-  _cache: TabPaneCache;
+      return () => {
+        if (_cache.current) {
+          removeTabCache(_cache.current.id, this);
+        }
+      };
+    }, [updateCache, removeTabCache]);
 
-  render() {
-    const {
-      cacheId,
-      cached,
-      prefixCls,
-      forceRender,
-      className,
-      style,
-      id,
-      active,
-      animated,
-      destroyInactiveTabPane,
-      tabKey,
-      children,
-    } = this.props;
+    let visited = false;
+
     if (active) {
-      this.visited = true;
+      visited = true;
     } else if (destroyInactiveTabPane) {
-      this.visited = false;
+      visited = false;
     }
+
     const mergedStyle: React.CSSProperties = {};
     if (!active) {
       if (animated) {
@@ -72,11 +76,9 @@ export default class DockTabPane extends React.PureComponent<
         mergedStyle.display = "none";
       }
     }
-
     // when cached == undefined, it will still cache the children inside tabs component, but not across whole dock layout
     // when cached == false, children are destroyed when not active
-    const isRender = cached === false ? active : this.visited;
-
+    const isRender = cached === false ? active : visited;
     let renderChildren: React.ReactNode = null;
     if (cached) {
       renderChildren = null;
@@ -84,10 +86,9 @@ export default class DockTabPane extends React.PureComponent<
       renderChildren = children;
     }
 
-    let getRef = cached ? this.getRef : null;
     return (
       <div
-        ref={getRef}
+        ref={cached ? getRef : null}
         id={cacheId}
         role="tabpanel"
         aria-labelledby={id && `${id}-tab-${tabKey}`}
@@ -99,26 +100,10 @@ export default class DockTabPane extends React.PureComponent<
           className
         )}
       >
-        {(active || this.visited || forceRender) && renderChildren}
+        {(active || visited || forceRender) && renderChildren}
       </div>
-    )
+    );
   }
+);
 
-  componentDidMount(): void {
-    this.updateCache();
-  }
-
-  componentDidUpdate(
-    prevProps: Readonly<DockTabPaneProps>,
-    prevState: Readonly<any>,
-    snapshot?: any
-  ): void {
-    this.updateCache();
-  }
-
-  componentWillUnmount(): void {
-    if (this._cache) {
-      this.context.removeTabCache(this._cache.id, this);
-    }
-  }
-}
+export default DockTabPane;

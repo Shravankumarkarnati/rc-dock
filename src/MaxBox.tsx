@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { BoxData, PanelData } from "./DockData";
 import { DockPanel } from "./DockPanel";
 import React from "react";
@@ -9,7 +9,7 @@ interface Props {
   boxData: BoxData;
 }
 
-export const MaxBox: React.FC<Props & any> = ({ boxData }: Props) => {
+export const MaxBox: React.FC<Props> = memo(({ boxData }: Props) => {
   const hidePanelData = useRef<PanelData>();
   let panelData = boxData.children[0] as PanelData;
 
@@ -33,4 +33,4 @@ export const MaxBox: React.FC<Props & any> = ({ boxData }: Props) => {
   } else {
     return <div className="dock-box dock-mbox dock-mbox-hide" />;
   }
-};
+});

@@ -2,11 +2,13 @@ import {
   BoxData,
   DockMode,
   DropDirection,
-  LayoutData, maximePlaceHolderId,
+  LayoutData,
+  maximePlaceHolderId,
   PanelData,
-  placeHolderStyle, TabBase,
+  placeHolderStyle,
+  TabBase,
   TabData,
-  TabGroup
+  TabGroup,
 } from "./DockData";
 
 let _watchObjectChange: WeakMap<any, any> = new WeakMap();
@@ -24,7 +26,7 @@ function clearObjectCache() {
 }
 
 function clone<T>(value: T, extra?: any): T {
-  let newValue: any = {...value, ...extra};
+  let newValue: any = { ...value, ...extra };
   if (Array.isArray(newValue.tabs)) {
     newValue.tabs = newValue.tabs.concat();
   }
@@ -79,9 +81,12 @@ export function nextZIndex(current?: number): number {
   return ++_zCount;
 }
 
-
-function findInPanel(panel: PanelData, id: string, filter: Filter): PanelData | TabData | undefined {
-  if (panel.id === id && (filter & Filter.Panel)) {
+function findInPanel(
+  panel: PanelData,
+  id: string,
+  filter: Filter
+): PanelData | TabData | undefined {
+  if (panel.id === id && filter & Filter.Panel) {
     return panel;
   }
   if (filter & Filter.Tab) {
@@ -94,28 +99,31 @@ function findInPanel(panel: PanelData, id: string, filter: Filter): PanelData | 
   return undefined;
 }
 
-function findInBox(box: BoxData | undefined, id: string, filter: Filter): PanelData | TabData | BoxData | undefined {
+function findInBox(
+  box: BoxData | undefined,
+  id: string,
+  filter: Filter
+): PanelData | TabData | BoxData | undefined {
   let result: PanelData | TabData | BoxData | undefined;
-  if ((filter | Filter.Box) && box?.id === id) {
+  if (filter | Filter.Box && box?.id === id) {
     return box;
   }
   if (!box?.children) {
     return undefined;
   }
   for (let child of box.children) {
-    if ('children' in child) {
-      if (result = findInBox(child, id, filter)) {
+    if ("children" in child) {
+      if ((result = findInBox(child, id, filter))) {
         break;
       }
-    } else if ('tabs' in child) {
-      if (result = findInPanel(child, id, filter)) {
+    } else if ("tabs" in child) {
+      if ((result = findInPanel(child, id, filter))) {
         break;
       }
     }
   }
   return result;
 }
-
 
 export enum Filter {
   Tab = 1,
@@ -132,8 +140,11 @@ export enum Filter {
   All = Tab | Panel | Box | EveryWhere,
 }
 
-
-export function find(layout: LayoutData, id: string, filter: Filter = Filter.AnyTabPanel): PanelData | TabData | BoxData | undefined {
+export function find(
+  layout: LayoutData,
+  id: string,
+  filter: Filter = Filter.AnyTabPanel
+): PanelData | TabData | BoxData | undefined {
   let result: PanelData | TabData | BoxData | undefined;
 
   if (filter & Filter.Docked) {
@@ -158,10 +169,15 @@ export function find(layout: LayoutData, id: string, filter: Filter = Filter.Any
   return result;
 }
 
-export function addNextToTab(layout: LayoutData, source: TabData | PanelData, target: TabData, direction: DropDirection): LayoutData {
+export function addNextToTab(
+  layout: LayoutData,
+  source: TabData | PanelData,
+  target: TabData,
+  direction: DropDirection
+): LayoutData {
   let pos = target.parent.tabs.indexOf(target);
   if (pos >= 0) {
-    if (direction === 'after-tab') {
+    if (direction === "after-tab") {
       ++pos;
     }
     return addTabToPanel(layout, source, target.parent, pos);
@@ -169,14 +185,19 @@ export function addNextToTab(layout: LayoutData, source: TabData | PanelData, ta
   return layout;
 }
 
-export function addTabToPanel(layout: LayoutData, source: TabData | PanelData, panel: PanelData, idx = -1): LayoutData {
+export function addTabToPanel(
+  layout: LayoutData,
+  source: TabData | PanelData,
+  panel: PanelData,
+  idx = -1
+): LayoutData {
   if (idx === -1) {
     idx = panel.tabs.length;
   }
 
   let tabs: TabData[];
   let activeId: string;
-  if ('tabs' in source) {
+  if ("tabs" in source) {
     // source is PanelData
     tabs = source.tabs;
     activeId = source.activeId;
@@ -202,20 +223,30 @@ export function addTabToPanel(layout: LayoutData, source: TabData | PanelData, p
 }
 
 export function converToPanel(source: TabData | PanelData): PanelData {
-  if ('tabs' in source) {
+  if ("tabs" in source) {
     // source is already PanelData
     return source;
   } else {
-    let newPanel: PanelData = {tabs: [source], group: source.group, activeId: source.id};
+    let newPanel: PanelData = {
+      tabs: [source],
+      group: source.group,
+      activeId: source.id,
+    };
     source.parent = newPanel;
     return newPanel;
   }
 }
 
-export function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel: PanelData, direction: DropDirection): LayoutData {
+export function dockPanelToPanel(
+  layout: LayoutData,
+  newPanel: PanelData,
+  panel: PanelData,
+  direction: DropDirection
+): LayoutData {
   let box = panel.parent;
-  let dockMode: DockMode = (direction === 'left' || direction === 'right') ? 'horizontal' : 'vertical';
-  let afterPanel = (direction === 'bottom' || direction === 'right');
+  let dockMode: DockMode =
+    direction === "left" || direction === "right" ? "horizontal" : "vertical";
+  let afterPanel = direction === "bottom" || direction === "right";
 
   let pos = box.children.indexOf(panel);
   if (pos >= 0) {
@@ -228,7 +259,7 @@ export function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel:
       newPanel.size = panel.size;
       newBox.children.splice(pos, 0, newPanel);
     } else {
-      let newChildBox: BoxData = {mode: dockMode, children: []};
+      let newChildBox: BoxData = { mode: dockMode, children: [] };
       newChildBox.size = panel.size;
       if (afterPanel) {
         newChildBox.children = [panel, newPanel];
@@ -247,11 +278,17 @@ export function dockPanelToPanel(layout: LayoutData, newPanel: PanelData, panel:
   return layout;
 }
 
-export function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: BoxData, direction: DropDirection): LayoutData {
+export function dockPanelToBox(
+  layout: LayoutData,
+  newPanel: PanelData,
+  box: BoxData,
+  direction: DropDirection
+): LayoutData {
   let parentBox = box.parent;
-  let dockMode: DockMode = (direction === 'left' || direction === 'right') ? 'horizontal' : 'vertical';
+  let dockMode: DockMode =
+    direction === "left" || direction === "right" ? "horizontal" : "vertical";
 
-  let afterPanel = (direction === 'bottom' || direction === 'right');
+  let afterPanel = direction === "bottom" || direction === "right";
 
   if (parentBox) {
     let pos = parentBox.children.indexOf(box);
@@ -266,7 +303,7 @@ export function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: Box
 
         newParentBox.children.splice(pos, 0, newPanel);
       } else {
-        let newChildBox: BoxData = {mode: dockMode, children: []};
+        let newChildBox: BoxData = { mode: dockMode, children: [] };
         newChildBox.size = box.size;
         if (afterPanel) {
           newChildBox.children = [box, newPanel];
@@ -296,7 +333,7 @@ export function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: Box
     } else {
       // replace root dockbox
 
-      let newDockBox: BoxData = {mode: dockMode, children: []};
+      let newDockBox: BoxData = { mode: dockMode, children: [] };
       newDockBox.size = box.size;
       if (afterPanel) {
         newDockBox.children = [newBox, newPanel];
@@ -317,8 +354,9 @@ export function dockPanelToBox(layout: LayoutData, newPanel: PanelData, box: Box
 }
 
 export function floatPanel(
-  layout: LayoutData, newPanel: PanelData,
-  rect?: {left: number, top: number, width: number, height: number}
+  layout: LayoutData,
+  newPanel: PanelData,
+  rect?: { left: number; top: number; width: number; height: number }
 ): LayoutData {
   let newBox = clone(layout.floatbox);
   if (rect) {
@@ -333,7 +371,8 @@ export function floatPanel(
 }
 
 export function panelToWindow(
-  layout: LayoutData, newPanel: PanelData
+  layout: LayoutData,
+  newPanel: PanelData
 ): LayoutData {
   let newBox = clone(layout.windowbox);
 
@@ -341,17 +380,20 @@ export function panelToWindow(
   return replaceBox(layout, layout.windowbox, newBox);
 }
 
-export function removeFromLayout(layout: LayoutData, source: TabData | PanelData): LayoutData {
+export function removeFromLayout(
+  layout: LayoutData,
+  source: TabData | PanelData
+): LayoutData {
   if (source) {
     let panelData: PanelData;
-    if ('tabs' in source) {
+    if ("tabs" in source) {
       panelData = source;
       layout = removePanel(layout, panelData);
     } else {
       panelData = source.parent;
       layout = removeTab(layout, source);
     }
-    if (panelData && panelData.parent && panelData.parent.mode === 'maximize') {
+    if (panelData && panelData.parent && panelData.parent.mode === "maximize") {
       let newPanel = layout.maxbox.children[0] as PanelData;
       if (!newPanel || (newPanel.tabs.length === 0 && !newPanel.panelLock)) {
         // max panel is gone, remove the place holder
@@ -399,12 +441,15 @@ function removeTab(layout: LayoutData, tab: TabData): LayoutData {
   return layout;
 }
 
-export function moveToFront(layout: LayoutData, source: TabData | PanelData): LayoutData {
+export function moveToFront(
+  layout: LayoutData,
+  source: TabData | PanelData
+): LayoutData {
   if (source) {
     let panelData: PanelData;
     let needUpdate = false;
     let changes: any = {};
-    if ('tabs' in source) {
+    if ("tabs" in source) {
       panelData = source;
     } else {
       panelData = source.parent;
@@ -414,7 +459,7 @@ export function moveToFront(layout: LayoutData, source: TabData | PanelData): La
         needUpdate = true;
       }
     }
-    if (panelData && panelData.parent && panelData.parent.mode === 'float') {
+    if (panelData && panelData.parent && panelData.parent.mode === "float") {
       // move float panel to front
       let newZ = nextZIndex(panelData.z);
       if (newZ !== panelData.z) {
@@ -430,10 +475,13 @@ export function moveToFront(layout: LayoutData, source: TabData | PanelData): La
 }
 
 // maximize or restore the panel
-export function maximize(layout: LayoutData, source: TabData | PanelData): LayoutData {
+export function maximize(
+  layout: LayoutData,
+  source: TabData | PanelData
+): LayoutData {
   if (source) {
-    if ('tabs' in source) {
-      if (source.parent.mode === 'maximize') {
+    if ("tabs" in source) {
+      if (source.parent.mode === "maximize") {
         return restorePanel(layout, source);
       } else {
         return maximizePanel(layout, source);
@@ -455,10 +503,10 @@ function maximizePanel(layout: LayoutData, panel: PanelData): LayoutData {
     ...panel,
     id: maximePlaceHolderId,
     tabs: [],
-    panelLock: {}
+    panelLock: {},
   };
   layout = replacePanel(layout, panel, placeHodlerPanel);
-  layout = dockPanelToBox(layout, panel, layout.maxbox, 'middle');
+  layout = dockPanelToBox(layout, panel, layout.maxbox, "middle");
   return layout;
 }
 
@@ -466,11 +514,11 @@ function restorePanel(layout: LayoutData, panel: PanelData): LayoutData {
   layout = removePanel(layout, panel);
   let placeHolder = find(layout, maximePlaceHolderId) as PanelData;
   if (placeHolder) {
-    let {x, y, z, w, h} = placeHolder;
-    panel = {...panel, x, y, z, w, h};
+    let { x, y, z, w, h } = placeHolder;
+    panel = { ...panel, x, y, z, w, h };
     return replacePanel(layout, placeHolder, panel);
   } else {
-    return dockPanelToBox(layout, panel, layout.dockbox, 'right');
+    return dockPanelToBox(layout, panel, layout.dockbox, "right");
   }
 }
 
@@ -480,7 +528,11 @@ function maximizeTab(layout: LayoutData, tab: TabData): LayoutData {
 }
 
 // move float panel into the screen
-export function fixFloatPanelPos(layout: LayoutData, layoutWidth?: number, layoutHeight?: number): LayoutData {
+export function fixFloatPanelPos(
+  layout: LayoutData,
+  layoutWidth?: number,
+  layoutHeight?: number
+): LayoutData {
   let layoutChanged = false;
   if (layout && layout.floatbox && layoutWidth > 200 && layoutHeight > 200) {
     let newFloatChildren = layout.floatbox.children.concat();
@@ -497,15 +549,15 @@ export function fixFloatPanelPos(layout: LayoutData, layoutWidth?: number, layou
       } else if (panel.h > layoutHeight) {
         panelChange.h = layoutHeight;
       }
-      if (typeof panel.y !== 'number') {
-        panelChange.y = (layoutHeight -  (panelChange.h || panel.h)) >> 1;
+      if (typeof panel.y !== "number") {
+        panelChange.y = (layoutHeight - (panelChange.h || panel.h)) >> 1;
       } else if (panel.y > layoutHeight - 16) {
         panelChange.y = Math.max(layoutHeight - 16 - (panel.h >> 1), 0);
       } else if (!(panel.y >= 0)) {
         panelChange.y = 0;
       }
 
-      if (typeof panel.x !== 'number') {
+      if (typeof panel.x !== "number") {
         panelChange.x = (layoutWidth - (panelChange.w || panel.w)) >> 1;
       } else if (panel.x + panel.w < 16) {
         panelChange.x = 16 - (panel.w >> 1);
@@ -527,12 +579,15 @@ export function fixFloatPanelPos(layout: LayoutData, layoutWidth?: number, layou
   return layout;
 }
 
-export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGroup}, loadTab?: (tab: TabBase) => TabData): LayoutData {
-
+export function fixLayoutData(
+  layout: LayoutData,
+  groups?: { [key: string]: TabGroup },
+  loadTab?: (tab: TabBase) => TabData
+): LayoutData {
   function fixPanelOrBox(d: PanelData | BoxData) {
     if (d.id == null) {
       d.id = nextId();
-    } else if (d.id.startsWith('+')) {
+    } else if (d.id.startsWith("+")) {
       let idnum = Number(d.id);
       if (idnum > _idCount) {
         // make sure generated id is unique
@@ -585,7 +640,7 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
     if (panel.minHeight <= 0) {
       panel.minHeight = 1;
     }
-    let {panelLock} = panel;
+    let { panelLock } = panel;
     if (panelLock) {
       if (panel.minWidth < panelLock.minWidth) {
         panel.minWidth = panelLock.minWidth;
@@ -613,7 +668,7 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
     for (let i = 0; i < box.children.length; ++i) {
       let child = box.children[i];
       child.parent = box;
-      if ('children' in child) {
+      if ("children" in child) {
         fixBoxData(child);
         if (child.children.length === 0) {
           // remove box with no child
@@ -641,14 +696,17 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
           }
           --i;
         }
-      } else if ('tabs' in child) {
+      } else if ("tabs" in child) {
         fixPanelData(child);
         if (child.tabs.length === 0) {
           // remove panel with no tab
           if (!child.panelLock) {
             box.children.splice(i, 1);
             --i;
-          } else if (child.group === placeHolderStyle && (box.children.length > 1 || box.parent)) {
+          } else if (
+            child.group === placeHolderStyle &&
+            (box.children.length > 1 || box.parent)
+          ) {
             // remove placeHolder Group
             box.children.splice(i, 1);
             --i;
@@ -657,7 +715,7 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
       }
       // merge min size
       switch (box.mode) {
-        case 'horizontal':
+        case "horizontal":
           if (child.minWidth > 0) box.minWidth += child.minWidth;
           if (child.minHeight > box.minHeight) box.minHeight = child.minHeight;
           if (child.widthFlex != null) {
@@ -667,7 +725,7 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
             box.heightFlex = mergeFlex(box.heightFlex, child.heightFlex);
           }
           break;
-        case 'vertical':
+        case "vertical":
           if (child.minWidth > box.minWidth) box.minWidth = child.minWidth;
           if (child.minHeight > 0) box.minHeight += child.minHeight;
           if (child.heightFlex != null) {
@@ -682,10 +740,10 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
     // add divider size
     if (box.children.length > 1) {
       switch (box.mode) {
-        case 'horizontal':
+        case "horizontal":
           box.minWidth += (box.children.length - 1) * 4;
           break;
-        case 'vertical':
+        case "vertical":
           box.minHeight += (box.children.length - 1) * 4;
           break;
       }
@@ -695,21 +753,21 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
   }
 
   if (layout.floatbox) {
-    layout.floatbox.mode = 'float';
+    layout.floatbox.mode = "float";
   } else {
-    layout.floatbox = {mode: 'float', children: [], size: 1};
+    layout.floatbox = { mode: "float", children: [], size: 1 };
   }
 
   if (layout.windowbox) {
-    layout.windowbox.mode = 'window';
+    layout.windowbox.mode = "window";
   } else {
-    layout.windowbox = {mode: 'window', children: [], size: 1};
+    layout.windowbox = { mode: "window", children: [], size: 1 };
   }
 
   if (layout.maxbox) {
-    layout.maxbox.mode = 'maximize';
+    layout.maxbox.mode = "maximize";
   } else {
-    layout.maxbox = {mode: 'maximize', children: [], size: 1};
+    layout.maxbox = { mode: "maximize", children: [], size: 1 };
   }
 
   fixBoxData(layout.dockbox);
@@ -719,12 +777,21 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
 
   if (layout.dockbox.children.length === 0) {
     // add place holder panel when root box is empty
-    let newPanel: PanelData = {id: '+0', group: placeHolderStyle, panelLock: {}, size: 200, tabs: []};
+    let newPanel: PanelData = {
+      id: "+0",
+      group: placeHolderStyle,
+      panelLock: {},
+      size: 200,
+      tabs: [],
+    };
     newPanel.parent = layout.dockbox;
     layout.dockbox.children.push(newPanel);
   } else {
     // merge and replace root box when box has only one child
-    while (layout.dockbox.children.length === 1 && 'children' in layout.dockbox.children[0]) {
+    while (
+      layout.dockbox.children.length === 1 &&
+      "children" in layout.dockbox.children[0]
+    ) {
       let newDockBox = clone(layout.dockbox.children[0] as BoxData);
       layout.dockbox = newDockBox;
       for (let child of newDockBox.children) {
@@ -740,8 +807,11 @@ export function fixLayoutData(layout: LayoutData, groups?: {[key: string]: TabGr
   return layout;
 }
 
-
-export function replacePanel(layout: LayoutData, panel: PanelData, newPanel: PanelData): LayoutData {
+export function replacePanel(
+  layout: LayoutData,
+  panel: PanelData,
+  newPanel: PanelData
+): LayoutData {
   for (let tab of newPanel.tabs) {
     tab.parent = newPanel;
   }
@@ -758,7 +828,11 @@ export function replacePanel(layout: LayoutData, panel: PanelData, newPanel: Pan
   return layout;
 }
 
-function replaceBox(layout: LayoutData, box: BoxData, newBox: BoxData): LayoutData {
+function replaceBox(
+  layout: LayoutData,
+  box: BoxData,
+  newBox: BoxData
+): LayoutData {
   for (let child of newBox.children) {
     child.parent = newBox;
   }
@@ -773,13 +847,13 @@ function replaceBox(layout: LayoutData, box: BoxData, newBox: BoxData): LayoutDa
     }
   } else {
     if (box.id === layout.dockbox.id || box === layout.dockbox) {
-      return {...layout, dockbox: newBox};
+      return { ...layout, dockbox: newBox };
     } else if (box.id === layout.floatbox.id || box === layout.floatbox) {
-      return {...layout, floatbox: newBox};
+      return { ...layout, floatbox: newBox };
     } else if (box.id === layout.windowbox.id || box === layout.windowbox) {
-      return {...layout, windowbox: newBox};
+      return { ...layout, windowbox: newBox };
     } else if (box.id === layout.maxbox.id || box === layout.maxbox) {
-      return {...layout, maxbox: newBox};
+      return { ...layout, maxbox: newBox };
     }
   }
   return layout;
@@ -808,30 +882,42 @@ export function getFloatPanelSize(panel: HTMLElement, tabGroup: TabGroup) {
   return [panelWidth, panelHeight];
 }
 
-export function findNearestPanel(rectFrom: DOMRect, rectTo: DOMRect, direction: string): number {
+export function findNearestPanel(
+  rectFrom: DOMRect,
+  rectTo: DOMRect,
+  direction: string
+): number {
   let distance = -1;
   let overlap = -1;
   let alignment = 0;
   switch (direction) {
-    case 'ArrowUp': {
+    case "ArrowUp": {
       distance = rectFrom.top - rectTo.bottom + rectFrom.height;
-      overlap = Math.min(rectFrom.right, rectTo.right) - Math.max(rectFrom.left, rectTo.left);
+      overlap =
+        Math.min(rectFrom.right, rectTo.right) -
+        Math.max(rectFrom.left, rectTo.left);
       break;
     }
-    case 'ArrowDown': {
+    case "ArrowDown": {
       distance = rectTo.top - rectFrom.bottom + rectFrom.height;
-      overlap = Math.min(rectFrom.right, rectTo.right) - Math.max(rectFrom.left, rectTo.left);
+      overlap =
+        Math.min(rectFrom.right, rectTo.right) -
+        Math.max(rectFrom.left, rectTo.left);
       break;
     }
-    case 'ArrowLeft': {
+    case "ArrowLeft": {
       distance = rectFrom.left - rectTo.right + rectFrom.width;
-      overlap = Math.min(rectFrom.bottom, rectTo.bottom) - Math.max(rectFrom.top, rectTo.top);
+      overlap =
+        Math.min(rectFrom.bottom, rectTo.bottom) -
+        Math.max(rectFrom.top, rectTo.top);
       alignment = Math.abs(rectFrom.top - rectTo.top);
       break;
     }
-    case 'ArrowRight': {
+    case "ArrowRight": {
       distance = rectTo.left - rectFrom.right + rectFrom.width;
-      overlap = Math.min(rectFrom.bottom, rectTo.bottom) - Math.max(rectFrom.top, rectTo.top);
+      overlap =
+        Math.min(rectFrom.bottom, rectTo.bottom) -
+        Math.max(rectFrom.top, rectTo.top);
       alignment = Math.abs(rectFrom.top - rectTo.top);
       break;
     }

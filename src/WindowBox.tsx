@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { memo } from "react";
 import { BoxData } from "./DockData";
 import { WindowPanel } from "./WindowPanel";
 import React from "react";
@@ -9,12 +9,7 @@ interface Props {
   boxData: BoxData;
 }
 
-export const WindowBox: React.FC<Props & any> = ({ boxData }: Props) => {
-  const enabled = useRef(
-    typeof window === "object" &&
-      (window?.navigator.platform === "Win32" ||
-        window?.navigator.platform === "MacIntel")
-  );
+export const WindowBox: React.FC<Props> = memo(({ boxData }: Props) => {
   let childrenRender: React.ReactNode[] = [];
 
   for (let child of boxData.children) {
@@ -24,4 +19,4 @@ export const WindowBox: React.FC<Props & any> = ({ boxData }: Props) => {
   }
 
   return <>childrenRender</>;
-};
+});
