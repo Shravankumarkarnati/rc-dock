@@ -124,7 +124,7 @@ export function loadLayoutData(
   }
 
   function loadPanelData(savedPanel: PanelBase): PanelData {
-    let {id, size, activeId, x, y, z, w, h, group} = savedPanel;
+    let {id, size, activeId, x, y, z, w, h, group, data} = savedPanel;
 
     let tabs: TabData[] = [];
     for (let savedTab of savedPanel.tabs) {
@@ -146,7 +146,7 @@ export function loadLayoutData(
     } else if (cache.panels.has(id)) {
       panelData = {...cache.panels.get(id), ...panelData};
     }
-    return panelData;
+    return {...panelData, data};
   }
 
   function loadBoxData(savedBox: BoxBase): BoxData {

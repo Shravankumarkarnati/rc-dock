@@ -141,6 +141,8 @@ export interface PanelBase {
   w?: number;
   /** float mode only */
   h?: number;
+  /** extra data, passed on to PanelData */
+  data?: Record<string,unknown>
 }
 
 export interface BoxBase {

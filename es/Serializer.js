@@ -97,7 +97,7 @@ export function loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLo
         return null;
     }
     function loadPanelData(savedPanel) {
-        let { id, size, activeId, x, y, z, w, h, group } = savedPanel;
+        let { id, size, activeId, x, y, z, w, h, group, data } = savedPanel;
         let tabs = [];
         for (let savedTab of savedPanel.tabs) {
             let tabData = loadTabData(savedTab);
@@ -121,7 +121,7 @@ export function loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLo
         else if (cache.panels.has(id)) {
             panelData = Object.assign(Object.assign({}, cache.panels.get(id)), panelData);
         }
-        return panelData;
+        return Object.assign(Object.assign({}, panelData), { data });
     }
     function loadBoxData(savedBox) {
         if (!savedBox) {
