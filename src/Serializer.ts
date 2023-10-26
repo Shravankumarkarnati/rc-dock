@@ -135,9 +135,9 @@ export function loadLayoutData(
     }
     let panelData: PanelData;
     if (w || h || x || y || z) {
-      panelData = {id, size, activeId, group, x, y, z, w, h, tabs};
+      panelData = {id, size, activeId, group, x, y, z, w, h, tabs, data};
     } else {
-      panelData = {id, size, activeId, group, tabs};
+      panelData = {id, size, activeId, group, tabs, data};
     }
     if (savedPanel.id === maximePlaceHolderId) {
       panelData.panelLock = {};
@@ -146,7 +146,7 @@ export function loadLayoutData(
     } else if (cache.panels.has(id)) {
       panelData = {...cache.panels.get(id), ...panelData};
     }
-    return {...panelData, data};
+    return panelData;
   }
 
   function loadBoxData(savedBox: BoxBase): BoxData {
