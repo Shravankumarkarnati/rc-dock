@@ -69,6 +69,10 @@ export interface TabGroup {
      * Override the default `moreIcon`
      */
     moreIcon?: React.ReactNode;
+    /**
+     * Override the default `moreIcon`
+     */
+    closeIcon?: React.ReactNode;
 }
 /** @ignore */
 export declare const defaultGroup: TabGroup;

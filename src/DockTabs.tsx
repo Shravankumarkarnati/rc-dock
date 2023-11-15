@@ -145,7 +145,7 @@ export class TabCache {
   }
 
   render(): React.ReactElement {
-    let {id, title, content, closable, cached, parent} = this.data;
+    let {id, title, content, closable, cached, parent, group} = this.data;
     let {onDragStart, onDragOver, onDrop, onDragLeave} = this;
     if (parent.parent.mode === 'window') {
       onDragStart = null;
@@ -156,12 +156,17 @@ export class TabCache {
     if (typeof content === 'function') {
       content = content(this.data);
     }
+    const closeIcon = this.context.getGroup(group || parent.group).closeIcon
+    const closeBtnClass = closeIcon ? "dock-tab-close-btn-custom" : "dock-tab-close-btn"
+
     let tab = (
       <DragDropDiv getRef={this.getRef} onDragStartT={onDragStart} role="tab" aria-selected={parent.activeId === id}
                    onDragOverT={onDragOver} onDropT={onDrop} onDragLeaveT={onDragLeave}>
         {title}
         {closable ?
-          <div className="dock-tab-close-btn" onClick={this.onCloseClick}/>
+          <div className={closeBtnClass} onClick={this.onCloseClick}>
+            {closeIcon}
+          </div>
           : null
         }
         <div className="dock-tab-hit-area" ref={this.getHitAreaRef}/>
