@@ -124,7 +124,7 @@ export function loadLayoutData(
   }
 
   function loadPanelData(savedPanel: PanelBase): PanelData {
-    let {id, size, activeId, x, y, z, w, h, group} = savedPanel;
+    let {id, size, activeId, x, y, z, w, h, group, data} = savedPanel;
 
     let tabs: TabData[] = [];
     for (let savedTab of savedPanel.tabs) {
@@ -135,9 +135,9 @@ export function loadLayoutData(
     }
     let panelData: PanelData;
     if (w || h || x || y || z) {
-      panelData = {id, size, activeId, group, x, y, z, w, h, tabs};
+      panelData = {id, size, activeId, group, x, y, z, w, h, tabs, data};
     } else {
-      panelData = {id, size, activeId, group, tabs};
+      panelData = {id, size, activeId, group, tabs, data};
     }
     if (savedPanel.id === maximePlaceHolderId) {
       panelData.panelLock = {};

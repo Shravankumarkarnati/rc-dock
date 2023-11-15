@@ -81,6 +81,19 @@ export interface LayoutProps {
   loadTab?(tab: TabBase): TabData;
 
   /**
+   * Called before closing a tab
+   * @param tabData TabData of the tab being closed
+   * @param closeTab callback to confirm the tab close action
+   */
+  onTabClose?(tabData: TabData, closeTab: () => void): void;
+
+  /**
+   * return `true` to trigger a layout change. 
+   * @param panelData panel data of the panel clicked or focused on
+   */
+  onFocusOrClickWithinPanel?(panelData: PanelData): boolean | undefined
+  
+  /**
    * modify the savedPanel, you can add additional data into the savedPanel
    */
   afterPanelSaved?(savedPanel: PanelBase, panel: PanelData): void;
@@ -161,6 +174,9 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
   updateTabCache(id: string, children: React.ReactNode): void {
     let cache = this._caches.get(id);
     if (cache) {
+      if (Object.is(cache.portal?.children, children)) { 
+        return;
+      }
       cache.portal = ReactDOM.createPortal(children, cache.div, cache.id);
       this.forceUpdate();
     }
@@ -608,6 +624,27 @@ export class DockLayout extends DockPortalManager implements DockContext {
     if (onLayoutChange) {
       let layout = this.getLayout();
       this.changeLayout(layout, currentTabId, direction, true);
+    }
+  }
+
+  onFocusOrClickWithinPanel(panelData: PanelData) {
+    const { onFocusOrClickWithinPanel: callback } = this.props;
+    if (callback) {
+      const shouldUpdate = callback(panelData);
+      if (shouldUpdate) {
+        this.onSilentChange(panelData.activeId, "active");
+      }
+    }
+  }
+
+  /** @ignore */
+  onTabClose(tabData: TabData, closeTab: () => void): void {
+    const {onTabClose} = this.props
+    if (onTabClose) {
+      onTabClose(tabData, closeTab)
+    }
+    else {
+      closeTab()
     }
   }
 
