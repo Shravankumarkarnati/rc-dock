@@ -148,7 +148,7 @@ export class TabCache {
   }
 
   render(): React.ReactElement {
-    let {id, title, content, closable, cached, parent, group} = this.data;
+    let {id, title, content, closable, cached, parent} = this.data;
     let {onDragStart, onDragOver, onDrop, onDragLeave} = this;
     if (parent.parent.mode === 'window') {
       onDragStart = null;
@@ -159,20 +159,28 @@ export class TabCache {
     if (typeof content === 'function') {
       content = content(this.data);
     }
-    const closeIcon = this.context.getGroup(group || parent.group).closeIcon
-    const closeBtnClass = closeIcon ? "dock-tab-close-btn-custom" : "dock-tab-close-btn"
+
+    let tabContent;
+    if (typeof title === "function") {
+      const TitleNode = title
+      tabContent = <TitleNode onClose={(e) => this.onCloseClick(e)} />;
+    } else {
+      tabContent = (
+        <>
+          {title}
+          {closable ? (
+            <div className="dock-tab-close-btn" onClick={this.onCloseClick} />
+          ) : null}
+        </>
+      );
+    }
 
     let tab = (
       <DragDropDiv getRef={this.getRef} onDragStartT={onDragStart} role="tab" aria-selected={parent.activeId === id}
-                   onDragOverT={onDragOver} onDropT={onDrop} onDragLeaveT={onDragLeave}>
-        {title}
-        {closable ?
-          <div className={closeBtnClass} onClick={this.onCloseClick}>
-            {closeIcon}
-          </div>
-          : null
-        }
-        <div className="dock-tab-hit-area" ref={this.getHitAreaRef}/>
+        onDragOverT={onDragOver} onDropT={onDrop} onDragLeaveT={onDragLeave}>
+
+        {tabContent}
+        <div className="dock-tab-hit-area" ref={this.getHitAreaRef} />
       </DragDropDiv>
     );
 
@@ -293,7 +301,7 @@ export class DockTabs extends React.PureComponent<Props> {
       panelExtraContent = panelExtra(panelData, this.context);
     } else if (maximizable || showNewWindowButton) {
       panelExtraContent = <div
-        className={panelData.parent.mode === 'maximize' ? "dock-panel-min-btn" : "dock-panel-max-btn" }
+        className={panelData.parent.mode === 'maximize' ? "dock-panel-min-btn" : "dock-panel-max-btn"}
         onClick={maximizable ? this.onMaximizeClick : null}
       />;
       if (showNewWindowButton) {
@@ -302,8 +310,8 @@ export class DockTabs extends React.PureComponent<Props> {
     }
     return (
       <DockTabBar onDragStart={onPanelDragStart} onDragMove={onPanelDragMove} onDragEnd={onPanelDragEnd}
-                  TabNavList={TabNavList} isMaximized={panelData.parent.mode === 'maximize'} {...props}
-                  extra={panelExtraContent}/>
+        TabNavList={TabNavList} isMaximized={panelData.parent.mode === 'maximize'} {...props}
+        extra={panelExtraContent} />
     );
   };
 
@@ -333,12 +341,12 @@ export class DockTabs extends React.PureComponent<Props> {
 
     return (
       <Tabs prefixCls="dock"
-            moreIcon={moreIcon}
-            animated={animated}
-            renderTabBar={this.renderTabBar}
-            activeKey={activeId}
-            onChange={this.onTabChange}
-            popupClassName={classNames(groupClassNames(group))}
+        moreIcon={moreIcon}
+        animated={animated}
+        renderTabBar={this.renderTabBar}
+        activeKey={activeId}
+        onChange={this.onTabChange}
+        popupClassName={classNames(groupClassNames(group))}
       >
         {children}
       </Tabs>

@@ -137,7 +137,7 @@ export class TabCache {
         return e.clientX > midx ? 'after-tab' : 'before-tab';
     }
     render() {
-        let { id, title, content, closable, cached, parent, group } = this.data;
+        let { id, title, content, closable, cached, parent } = this.data;
         let { onDragStart, onDragOver, onDrop, onDragLeave } = this;
         if (parent.parent.mode === 'window') {
             onDragStart = null;
@@ -148,13 +148,18 @@ export class TabCache {
         if (typeof content === 'function') {
             content = content(this.data);
         }
-        const closeIcon = this.context.getGroup(group || parent.group).closeIcon;
-        const closeBtnClass = closeIcon ? "dock-tab-close-btn-custom" : "dock-tab-close-btn";
+        let tabContent;
+        if (typeof title === "function") {
+            const TitleNode = title;
+            tabContent = React.createElement(TitleNode, { onClose: (e) => this.onCloseClick(e) });
+        }
+        else {
+            tabContent = (React.createElement(React.Fragment, null,
+                title,
+                closable ? (React.createElement("div", { className: "dock-tab-close-btn", onClick: this.onCloseClick })) : null));
+        }
         let tab = (React.createElement(DragDropDiv, { getRef: this.getRef, onDragStartT: onDragStart, role: "tab", "aria-selected": parent.activeId === id, onDragOverT: onDragOver, onDropT: onDrop, onDragLeaveT: onDragLeave },
-            title,
-            closable ?
-                React.createElement("div", { className: closeBtnClass, onClick: this.onCloseClick }, closeIcon)
-                : null,
+            tabContent,
             React.createElement("div", { className: "dock-tab-hit-area", ref: this.getHitAreaRef })));
         return (React.createElement(DockTabPane, { key: id, cacheId: id, cached: cached, tab: tab }, content));
     }

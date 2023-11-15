@@ -69,10 +69,6 @@ export interface TabGroup {
      * Override the default `moreIcon`
      */
     moreIcon?: React.ReactNode;
-    /**
-     * Override the default `moreIcon`
-     */
-    closeIcon?: React.ReactNode;
 }
 /** @ignore */
 export declare const defaultGroup: TabGroup;
@@ -169,7 +165,9 @@ export interface TabData extends TabBase, DockDataBase {
     /**
      * title that's shown in the tab of the panel header
      */
-    title: React.ReactChild;
+    title: React.ReactChild | ((props: {
+        onClose: (e: React.MouseEvent<Element, MouseEvent>) => void;
+    }) => React.ReactElement);
     content: React.ReactElement | ((tab: TabData) => React.ReactElement);
     closable?: boolean;
     /**
