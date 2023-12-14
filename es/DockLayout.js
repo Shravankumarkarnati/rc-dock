@@ -489,16 +489,6 @@ export class DockLayout extends DockPortalManager {
             }
         }
     }
-    /** @ignore */
-    onTabClose(tabData, closeTab) {
-        const { onTabClose } = this.props;
-        if (onTabClose) {
-            onTabClose(tabData, closeTab);
-        }
-        else {
-            closeTab();
-        }
-    }
     // public api
     saveLayout() {
         return Serializer.saveLayoutData(this.getLayout(), this.props.saveTab, this.props.afterPanelSaved);

@@ -81,18 +81,11 @@ export interface LayoutProps {
   loadTab?(tab: TabBase): TabData;
 
   /**
-   * Called before closing a tab
-   * @param tabData TabData of the tab being closed
-   * @param closeTab callback to confirm the tab close action
-   */
-  onTabClose?(tabData: TabData, closeTab: () => void): void;
-
-  /**
    * return `true` to trigger a layout change. 
    * @param panelData panel data of the panel clicked or focused on
    */
   onFocusOrClickWithinPanel?(panelData: PanelData): boolean | undefined
-  
+
   /**
    * modify the savedPanel, you can add additional data into the savedPanel
    */
@@ -174,7 +167,7 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
   updateTabCache(id: string, children: React.ReactNode): void {
     let cache = this._caches.get(id);
     if (cache) {
-      if (Object.is(cache.portal?.children, children)) { 
+      if (Object.is(cache.portal?.children, children)) {
         return;
       }
       cache.portal = ReactDOM.createPortal(children, cache.div, cache.id);
@@ -509,11 +502,11 @@ export class DockLayout extends DockPortalManager implements DockContext {
         maximizeTo = document.getElementById(maximizeTo);
       }
       maximize = ReactDOM.createPortal(
-        <MaxBox boxData={layout.maxbox}/>,
+        <MaxBox boxData={layout.maxbox} />,
         maximizeTo
       );
     } else {
-      maximize = <MaxBox boxData={layout.maxbox}/>;
+      maximize = <MaxBox boxData={layout.maxbox} />;
     }
     // }
 
@@ -527,13 +520,13 @@ export class DockLayout extends DockPortalManager implements DockContext {
     return (
       <div ref={this.getRef} className="dock-layout" style={style}>
         <DockContextProvider value={this}>
-          <DockBox size={1} boxData={layout.dockbox}/>
-          <FloatBox boxData={layout.floatbox}/>
-          <WindowBox boxData={layout.windowbox}/>
+          <DockBox size={1} boxData={layout.dockbox} />
+          <FloatBox boxData={layout.floatbox} />
+          <WindowBox boxData={layout.windowbox} />
           {maximize}
           {portals}
         </DockContextProvider>
-        <div className="dock-drop-indicator" style={dropRectStyle}/>
+        <div className="dock-drop-indicator" style={dropRectStyle} />
       </div>
     );
   }
@@ -628,23 +621,12 @@ export class DockLayout extends DockPortalManager implements DockContext {
   }
 
   onFocusOrClickWithinPanel(panelData: PanelData) {
-    const { onFocusOrClickWithinPanel: callback } = this.props;
+    const {onFocusOrClickWithinPanel: callback} = this.props;
     if (callback) {
       const shouldUpdate = callback(panelData);
       if (shouldUpdate) {
         this.onSilentChange(panelData.activeId, "active");
       }
-    }
-  }
-
-  /** @ignore */
-  onTabClose(tabData: TabData, closeTab: () => void): void {
-    const {onTabClose} = this.props
-    if (onTabClose) {
-      onTabClose(tabData, closeTab)
-    }
-    else {
-      closeTab()
     }
   }
 

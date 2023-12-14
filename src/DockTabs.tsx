@@ -66,11 +66,8 @@ export class TabCache {
   }
 
   onCloseClick = (e: React.MouseEvent) => {
-    const closeTab = () => {
-      this.context.dockMove(this.data, null, 'remove');
-      e.stopPropagation();
-    }
-    this.context.onTabClose(this.data, closeTab)
+    this.context.dockMove(this.data, null, 'remove');
+    e.stopPropagation();
   };
 
   onDragStart = (e: DragManager.DragState) => {

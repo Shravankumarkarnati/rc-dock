@@ -364,13 +364,6 @@ export interface DockContext {
   ): void;
 
   /**
-   * Called before closing a tab
-   * @param tabData TabData of the tab being closed
-   * @param closeTab callback to confirm the tab close action
-   */
-  onTabClose(tabData: TabData, closeTab: () => void): void;
-
-  /**
    * DockPanel calls this whenever there is focus or click event within the panel.
    * @param panelData panel data of the panel clicked or focused on
    */

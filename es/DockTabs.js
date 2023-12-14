@@ -42,11 +42,8 @@ export class TabCache {
             this._hitAreaRef = r;
         };
         this.onCloseClick = (e) => {
-            const closeTab = () => {
-                this.context.dockMove(this.data, null, 'remove');
-                e.stopPropagation();
-            };
-            this.context.onTabClose(this.data, closeTab);
+            this.context.dockMove(this.data, null, 'remove');
+            e.stopPropagation();
         };
         this.onDragStart = (e) => {
             let panel = this.data.parent;
