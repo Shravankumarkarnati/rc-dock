@@ -69,13 +69,13 @@ export function saveLayoutData(
         tabs.push(savedTab);
       }
     }
-    let {id, size, activeId, group} = panelData;
+    let {id, size, activeId, group, data} = panelData;
     let savedPanel: PanelBase;
     if (panelData.parent.mode === 'float' || panelData.parent.mode === 'window') {
       let {x, y, z, w, h} = panelData;
-      savedPanel = {id, size, tabs, group, activeId, x, y, z, w, h};
+      savedPanel = {id, size, tabs, group, activeId, x, y, z, w, h, data};
     } else {
-      savedPanel = {id, size, tabs, group, activeId};
+      savedPanel = {id, size, tabs, group, activeId, data};
     }
     if (afterPanelSaved) {
       afterPanelSaved(savedPanel, panelData);
