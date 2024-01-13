@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "none",
-    "jsx": "react",
-    "moduleResolution": "node",
+    "alwaysStrict": true,
+    "declaration": true,
     "esModuleInterop": true,
+    "jsx": "react",
     "lib": [
       "esnext",
       "es2018",
@@ -13,18 +12,20 @@
       "es2015",
       "dom"
     ],
-    "alwaysStrict": true,
+    "module": "none",
+    "moduleResolution": "node",
+    "newLine": "lf",
     "noImplicitAny": true,
+    "outDir": "./lib",
     "skipLibCheck": true,
     "sourceMap": false,
-    "declaration": true,
-    "newLine": "lf",
-    "outDir": "./lib"
+    "target": "es2017"
   },
-  "include": [
-    "src/**/*"
-  ],
   "exclude": [
     "node_modules"
+  ],
+  "include": [
+    "src/**/*",
+    "types"
   ]
 }
