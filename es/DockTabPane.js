@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
 import { DockContextType } from "./DockData";
-export default class DockTabPane extends React.PureComponent {
+class DockTabPane extends React.PureComponent {
     constructor() {
         super(...arguments);
         this.getRef = (r) => {
@@ -69,3 +69,4 @@ export default class DockTabPane extends React.PureComponent {
     }
 }
 DockTabPane.contextType = DockContextType;
+export default DockTabPane;
