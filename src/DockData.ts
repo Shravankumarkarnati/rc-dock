@@ -398,4 +398,4 @@ export const DockContextType = React.createContext<DockContext>(null!);
 /** @ignore */
 export const DockContextProvider = DockContextType.Provider;
 
-export const useDockContext = React.useContext(DockContextType);
+export const useDockContext = () => React.useContext(DockContextType);
