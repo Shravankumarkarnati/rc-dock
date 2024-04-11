@@ -281,16 +281,20 @@ export const DockPanel = ({ panelData, size }: Props) => {
     }
   }, [panelData]);
 
-  const onPanelClicked = React.useCallback((e: React.MouseEvent) => {
-    const target = e.nativeEvent.target;
-    if (
-      !ref.contains(ref.ownerDocument.activeElement) &&
-      target instanceof Node &&
-      ref.contains(target)
-    ) {
-      (ref.querySelector(".dock-bar") as HTMLElement).focus();
-    }
-  }, []);
+  const onPanelClicked = React.useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.nativeEvent.target;
+      if (
+        ref &&
+        !ref.contains(ref.ownerDocument.activeElement) &&
+        target instanceof Node &&
+        ref.contains(target)
+      ) {
+        (ref.querySelector(".dock-bar") as HTMLElement).focus();
+      }
+    },
+    [ref]
+  );
 
   React.useEffect(() => {
     if (ref) {
@@ -304,7 +308,7 @@ export const DockPanel = ({ panelData, size }: Props) => {
     }
 
     return () => {
-      ref.removeEventListener("pointerdown", onFloatPointerDown, {
+      ref?.removeEventListener("pointerdown", onFloatPointerDown, {
         capture: true,
       });
     };

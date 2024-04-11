@@ -1,7 +1,7 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import {jsxTab, htmlTab} from './prism-tabs';
-import {DockLayout} from '../lib';
+import * as React from "react";
+import * as ReactDOM from "react-dom/client";
+import { jsxTab, htmlTab } from "./prism-tabs";
+import { DockLayout } from "../lib";
 
 function getTab(width, height) {
   let title = `size ${width}x${height}`;
@@ -12,19 +12,22 @@ function getTab(width, height) {
     minHeight: height,
     content: (
       <div>
-        <p>This tab has a minimal size.<br/>
-          {width} x {height} px</p>
+        <p>
+          This tab has a minimal size.
+          <br />
+          {width} x {height} px
+        </p>
       </div>
     ),
-  }
+  };
 }
 
 let box = {
   dockbox: {
-    mode: 'horizontal',
+    mode: "horizontal",
     children: [
       {
-        mode: 'vertical',
+        mode: "vertical",
         children: [
           {
             tabs: [getTab(300, 300), getTab(300, 0)],
@@ -33,22 +36,31 @@ let box = {
             tabs: [getTab(300, 100), getTab(100, 100)],
           },
           jsxTab,
-          htmlTab
-        ]
+          htmlTab,
+        ],
       },
       {
         tabs: [getTab(0, 300), getTab(0, 0)],
       },
-    ]
-  }
+    ],
+  },
 };
 
 class Demo extends React.Component {
   render() {
     return (
-      <DockLayout defaultLayout={box} style={{position: 'absolute', left: 10, top: 10, right: 10, bottom: 10}}/>
+      <DockLayout
+        defaultLayout={box}
+        style={{
+          position: "absolute",
+          left: 10,
+          top: 10,
+          right: 10,
+          bottom: 10,
+        }}
+      />
     );
   }
 }
 
-ReactDOM.render(<Demo/>, document.getElementById('app'));
+ReactDOM.createRoot(document.getElementById("app")).render(<Demo />);

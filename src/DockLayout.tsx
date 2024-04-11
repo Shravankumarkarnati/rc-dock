@@ -136,7 +136,7 @@ export const DockLayout = ({
   const [state, setState] = React.useState<LayoutState>(() => {
     let preparedLayout: LayoutData;
     if (defaultLayout) {
-      preparedLayout = utils.prepareInitData(defaultLayout);
+      preparedLayout = utils.prepareInitData(defaultLayout, groups, loadTab);
     } else if (!loadTab) {
       throw new Error(
         "DockLayout.loadTab and DockLayout.defaultLayout should not both be undefined."
@@ -632,9 +632,13 @@ export const DockLayout = ({
 };
 
 const utils = {
-  prepareInitData(data: LayoutData): LayoutData {
+  prepareInitData(
+    data: LayoutData,
+    groups: LayoutProps["groups"],
+    loadTab: LayoutProps["loadTab"]
+  ): LayoutData {
     let layout = { ...data };
-    Algorithm.fixLayoutData(layout, this.props.groups, this.props.loadTab);
+    Algorithm.fixLayoutData(layout, groups, loadTab);
     return layout;
   },
   loadLayoutData(

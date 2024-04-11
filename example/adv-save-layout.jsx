@@ -1,18 +1,17 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import {htmlTab, jsxTab} from "./prism-tabs";
-import {DockLayout} from '../lib';
+import * as React from "react";
+import * as ReactDOM from "react-dom/client";
+import { htmlTab, jsxTab } from "./prism-tabs";
+import { DockLayout } from "../lib";
 
 let groups = {
   allowWindow: {
     floatable: true,
     newWindow: true,
     maximizable: true,
-  }
+  },
 };
 
 class InputTab extends React.PureComponent {
-
   onChange = (e) => {
     this.props.tabData.inputValue = e.target.value;
     this.forceUpdate();
@@ -22,19 +21,28 @@ class InputTab extends React.PureComponent {
     return (
       <div>
         <p>input value will be saved</p>
-        <input style={{width: '100%'}} onChange={this.onChange} value={this.props.tabData.inputValue}/>
+        <input
+          style={{ width: "100%" }}
+          onChange={this.onChange}
+          value={this.props.tabData.inputValue}
+        />
       </div>
-    )
+    );
   }
 
   static create(tabData) {
-    return <InputTab tabData={tabData}/>;
+    return <InputTab tabData={tabData} />;
   }
 }
 
 let tab0 = {
-  id: 'tab0', title: 'tab0',
-  content: <div>This tab will be added back to main panel every time you load layout.</div>
+  id: "tab0",
+  title: "tab0",
+  content: (
+    <div>
+      This tab will be added back to main panel every time you load layout.
+    </div>
+  ),
 };
 
 class Demo extends React.Component {
@@ -42,51 +50,57 @@ class Demo extends React.Component {
     this.dockLayout = r;
   };
 
-  state = {saved: null};
+  state = { saved: null };
 
   defaultLayout = {
     dockbox: {
-      mode: 'horizontal',
+      mode: "horizontal",
       children: [
         {
           size: 200,
-          tabs: [{id: 'tab1'}, {id: 'tab2'}],
+          tabs: [{ id: "tab1" }, { id: "tab2" }],
         },
         {
-          id: 'main-panel',
+          id: "main-panel",
           size: 400,
-          tabs: [{id: 'tab0'}, {id: 'jsxTab'}, {id: 'htmlTab'}],
+          tabs: [{ id: "tab0" }, { id: "jsxTab" }, { id: "htmlTab" }],
           panelLock: {
-            panelStyle: 'main'
-          }
+            panelStyle: "main",
+          },
         },
         {
           size: 200,
-          tabs: [{id: 'tab5'}, {id: 'tab6'}],
+          tabs: [{ id: "tab5" }, { id: "tab6" }],
         },
-      ]
-    }
+      ],
+    },
   };
 
   saveTab = (tabData) => {
-    let {id, inputValue} = tabData;
+    let { id, inputValue } = tabData;
     // add inputValue from saved data;
-    if (id === 'tab0') {
+    if (id === "tab0") {
       return null;
     }
-    return {id, inputValue};
+    return { id, inputValue };
   };
   loadTab = (savedTab) => {
     let id = savedTab.id;
     switch (id) {
-      case 'tab0':
+      case "tab0":
         return tab0;
-      case 'jsxTab':
+      case "jsxTab":
         return jsxTab;
-      case 'htmlTab':
+      case "htmlTab":
         return htmlTab;
       default:
-        return {id, title: id, content: InputTab.create, inputValue: savedTab.inputValue, group: 'allowWindow'};
+        return {
+          id,
+          title: id,
+          content: InputTab.create,
+          inputValue: savedTab.inputValue,
+          group: "allowWindow",
+        };
     }
   };
 
@@ -94,27 +108,47 @@ class Demo extends React.Component {
   afterPanelLoaded = (savedPanel, panelData) => {
     let id = savedPanel.id;
 
-    if (id === 'main-panel') {
+    if (id === "main-panel") {
       panelData.panelLock = {
-        panelStyle: 'main'
+        panelStyle: "main",
       };
-      panelData.tabs.unshift({...tab0});
+      panelData.tabs.unshift({ ...tab0 });
     }
   };
 
   render() {
     return (
       <div>
-        <DockLayout ref={this.getRef} defaultLayout={this.defaultLayout} groups={groups}
-                    saveTab={this.saveTab} loadTab={this.loadTab} afterPanelLoaded={this.afterPanelLoaded}
-                    style={{position: 'absolute', left: 10, top: 60, right: 10, bottom: 10}}/>
-        <div className='top-panel'>
-          <button className='btn' style={{marginRight: 20}}
-                  onClick={() => this.setState({saved: this.dockLayout.saveLayout()})}>
+        <DockLayout
+          ref={this.getRef}
+          defaultLayout={this.defaultLayout}
+          groups={groups}
+          saveTab={this.saveTab}
+          loadTab={this.loadTab}
+          afterPanelLoaded={this.afterPanelLoaded}
+          style={{
+            position: "absolute",
+            left: 10,
+            top: 60,
+            right: 10,
+            bottom: 10,
+          }}
+        />
+        <div className="top-panel">
+          <button
+            className="btn"
+            style={{ marginRight: 20 }}
+            onClick={() =>
+              this.setState({ saved: this.dockLayout.saveLayout() })
+            }
+          >
             Save Layout
           </button>
-          <button className='btn' disabled={this.state.saved == null}
-                  onClick={() => this.dockLayout.loadLayout(this.state.saved)}>
+          <button
+            className="btn"
+            disabled={this.state.saved == null}
+            onClick={() => this.dockLayout.loadLayout(this.state.saved)}
+          >
             Load Layout
           </button>
         </div>
@@ -123,4 +157,4 @@ class Demo extends React.Component {
   }
 }
 
-ReactDOM.render(<Demo/>, document.getElementById('app'));
+ReactDOM.createRoot(document.getElementById("app")).render(<Demo />);
