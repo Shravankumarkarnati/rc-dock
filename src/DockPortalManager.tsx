@@ -3,6 +3,7 @@ import { TabPaneCache } from "./DockData";
 import { createPortal } from "react-dom";
 
 type PortalManager = {
+  caches: Map<string, TabPaneCache>;
   getTabCache(id: string, owner: any): TabPaneCache;
   removeTabCache(id: string, owner: any): void;
   updateTabCache(id: string, children: React.ReactNode): void;
@@ -11,7 +12,8 @@ type PortalManager = {
 /** @ignore */
 const PortalManagerContextType = React.createContext<PortalManager>(null!);
 
-export const usePortalManager = React.useContext(PortalManagerContextType);
+export const usePortalManager = () =>
+  React.useContext(PortalManagerContextType);
 
 type Props = {
   children: React.ReactNode;
@@ -85,8 +87,8 @@ export const DockPortalManager = ({ children }: Props) => {
   );
 
   const value: PortalManager = useMemo(
-    () => ({ getTabCache, removeTabCache, updateTabCache }),
-    [getTabCache, removeTabCache, updateTabCache]
+    () => ({ caches, getTabCache, removeTabCache, updateTabCache }),
+    [caches, getTabCache, removeTabCache, updateTabCache]
   );
 
   return (
@@ -94,4 +96,17 @@ export const DockPortalManager = ({ children }: Props) => {
       {children}
     </PortalManagerContextType.Provider>
   );
+};
+
+export const RenderDockPortals = () => {
+  const { caches } = usePortalManager();
+
+  let portals: React.ReactPortal[] = [];
+  for (let [key, cache] of caches) {
+    if (cache.portal) {
+      portals.push(cache.portal);
+    }
+  }
+
+  return <>portals</>;
 };
