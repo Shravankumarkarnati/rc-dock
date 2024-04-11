@@ -6,9 +6,9 @@ export * from "./DockLayout";
 export * from "./dragdrop/DragManager";
 export * from "./dragdrop/GestureManager";
 export * from "./dragdrop/DragDropDiv";
-export * from './Divider';
-export * from './DividerBox';
+export * from "./Divider";
+export * from "./DividerBox";
 
-import {DockLayout} from './DockLayout';
+import { DockLayout } from "./DockLayout";
 
 export default DockLayout;
