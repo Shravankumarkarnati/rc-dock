@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Divider, DividerChild } from "./Divider";
+import { useForceUpdate } from "./UseForceUpdate";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   mode?: "horizontal" | "vertical";
@@ -7,8 +8,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 
 export const DividerBox = ({ children, mode, className, ...props }: Props) => {
   const [ref, setRef] = React.useState<null | HTMLDivElement>(null);
-  const [, setCount] = React.useState(1);
-  const forceUpdate = React.useCallback(() => setCount((prev) => prev++), []);
+  const forceUpdate = useForceUpdate();
 
   const getDividerData = React.useCallback(
     (idx: number) => {
