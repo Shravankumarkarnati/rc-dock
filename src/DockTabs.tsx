@@ -15,7 +15,7 @@ import { DragDropDiv } from "./dragdrop/DragDropDiv";
 import { DockTabBar } from "./DockTabBar";
 import DockTabPane from "./DockTabPane";
 import { getFloatPanelSize } from "./Algorithm";
-import { WindowBox } from "./WindowBox";
+import { WindowBox, isWindowBoxEnabled } from "./WindowBox";
 import { groupClassNames } from "./Utils";
 import classNames from "classnames";
 import { useForceUpdate } from "./UseForceUpdate";
@@ -315,7 +315,7 @@ export const DockTabs = ({
 
       let showNewWindowButton =
         group.newWindow &&
-        WindowBox.enabled &&
+        isWindowBoxEnabled() &&
         panelData.parent.mode === "float";
 
       let panelExtraContent: React.ReactElement;
