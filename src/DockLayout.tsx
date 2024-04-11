@@ -21,7 +21,6 @@ import {
   TabData,
   TabGroup,
 } from "./DockData";
-import { DockPanel } from "./DockPanel";
 import { DockPortalManager, RenderDockPortals } from "./DockPortalManager";
 import * as DragManager from "./dragdrop/DragManager";
 import { FloatBox } from "./FloatBox";
@@ -316,7 +315,6 @@ export const DockLayout = ({
   const onDragStateChange = React.useCallback(
     (draggingScope: any) => {
       if (draggingScope == null) {
-        DockPanel.droppingPanel = null;
         if (state.dropRect) {
           setState((prev) => ({ ...prev, dropRect: null }));
         }

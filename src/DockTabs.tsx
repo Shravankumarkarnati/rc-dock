@@ -13,7 +13,7 @@ import Dropdown from "rc-dropdown";
 import * as DragManager from "./dragdrop/DragManager";
 import { DragDropDiv } from "./dragdrop/DragDropDiv";
 import { DockTabBar } from "./DockTabBar";
-import DockTabPane from "./DockTabPane";
+import DockTabPane, { Tab } from "./DockTabPane";
 import { getFloatPanelSize } from "./Algorithm";
 import { WindowBox, isWindowBoxEnabled } from "./WindowBox";
 import { groupClassNames } from "./Utils";
@@ -60,7 +60,7 @@ export class TabCache {
 
   data: TabData;
   context: DockContext;
-  content: React.ReactElement;
+  content: Tab;
 
   constructor(context: DockContext) {
     this.context = context;
@@ -164,7 +164,7 @@ export class TabCache {
     return e.clientX > midx ? "after-tab" : "before-tab";
   }
 
-  render(): React.ReactElement {
+  render(): Tab {
     let { id, title, content, closable, cached, parent } = this.data;
     let { onDragStart, onDragOver, onDrop, onDragLeave } = this;
     if (parent.parent.mode === "window") {
@@ -194,11 +194,15 @@ export class TabCache {
       </DragDropDiv>
     );
 
-    return (
-      <DockTabPane key={id} cacheId={id} cached={cached} tab={tab}>
-        {content}
-      </DockTabPane>
-    );
+    return {
+      key: id,
+      label: tab,
+      children: (
+        <DockTabPane key={id} cacheId={id} cached={cached} label={tab}>
+          {content}
+        </DockTabPane>
+      ),
+    };
   }
 
   destroy() {
@@ -276,14 +280,13 @@ export const DockTabs = ({
           <MenuItem>New Window</MenuItem>
         </Menu>
       );
-      let trigger = showWithLeftClick
-        ? ["contextMenu", "click"]
-        : ["contextMenu"];
       return (
         <Dropdown
           prefixCls="dock-dropdown"
           overlay={nativeMenu}
-          trigger={trigger}
+          trigger={
+            showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
+          }
           mouseEnterDelay={0.1}
           mouseLeaveDelay={0.1}
         >
@@ -383,22 +386,18 @@ export const DockTabs = ({
     moreIcon = "...";
   }
 
-  let children: React.ReactNode[] = [];
-  for (let [, tab] of cache.current) {
-    children.push(tab.content);
-  }
+  let items = [...cache.current.values()].map((c) => c.content);
 
   return (
     <Tabs
       prefixCls="dock"
-      moreIcon={moreIcon}
+      more={{ icon: moreIcon }}
       animated={animated}
       renderTabBar={renderTabBar}
       activeKey={activeId}
       onChange={onTabChange}
       popupClassName={classNames(groupClassNames(group))}
-    >
-      {children}
-    </Tabs>
+      items={items}
+    />
   );
 };

@@ -1,8 +1,6 @@
 import * as React from "react";
 import {
   BoxData,
-  DockContext,
-  DockContextType,
   DockMode,
   DropDirection,
   PanelData,

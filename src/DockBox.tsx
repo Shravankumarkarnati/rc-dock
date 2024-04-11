@@ -1,11 +1,6 @@
 import * as React from "react";
-import {
-  BoxData,
-  DockContext,
-  DockContextType,
-  useDockContext,
-} from "./DockData";
 import { Divider, DividerChild } from "./Divider";
+import { BoxData, useDockContext } from "./DockData";
 import { DockPanel } from "./DockPanel";
 import { useForceUpdate } from "./UseForceUpdate";
 
