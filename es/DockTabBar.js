@@ -16,13 +16,14 @@ import { DockContextType } from "./DockData";
  * @return returns true if navigation is handled in local tab move, otherwise returns false
  */
 function checkLocalTabMove(key, tabbar) {
-    if (key === 'ArrowLeft' || key === 'ArrowRight') {
-        let tabs = Array.from(tabbar.querySelectorAll('.dock-tab-btn'));
-        let activeTab = tabbar.querySelector('.dock-tab-active>.dock-tab-btn');
+    if (key === "ArrowLeft" || key === "ArrowRight") {
+        let tabs = Array.from(tabbar.querySelectorAll(".dock-tab-btn"));
+        let activeTab = tabbar.querySelector(".dock-tab-active>.dock-tab-btn");
         let i = tabs.indexOf(activeTab);
         if (i >= 0) {
-            if (key === 'ArrowLeft') {
+            if (key === "ArrowLeft") {
                 if (i > 0) {
+                    ;
                     tabs[i - 1].click();
                     tabs[i - 1].focus();
                     return true;
@@ -30,6 +31,7 @@ function checkLocalTabMove(key, tabbar) {
             }
             else {
                 if (i < tabs.length - 1) {
+                    ;
                     tabs[i + 1].click();
                     tabs[i + 1].focus();
                     return true;
@@ -47,7 +49,7 @@ export function DockTabBar(props) {
         ref.current = div;
     };
     const onKeyDown = (e) => {
-        if (e.key.startsWith('Arrow')) {
+        if (e.key.startsWith("Arrow")) {
             if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
                 layout.navigateToPanel(ref.current, e.key);
             }

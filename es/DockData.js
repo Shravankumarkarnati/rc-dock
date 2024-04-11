@@ -5,9 +5,9 @@ export const defaultGroup = {
     maximizable: true,
 };
 /** @ignore */
-export const placeHolderStyle = 'place-holder';
+export const placeHolderStyle = "place-holder";
 /** @ignore */
-export const maximePlaceHolderId = '-maximized-placeholder-';
+export const maximePlaceHolderId = "-maximized-placeholder-";
 /** @ignore */
 export const placeHolderGroup = {
     floatable: false,
@@ -16,5 +16,4 @@ export const placeHolderGroup = {
 export const DockContextType = React.createContext(null);
 /** @ignore */
 export const DockContextProvider = DockContextType.Provider;
-/** @ignore */
-export const DockContextConsumer = DockContextType.Consumer;
+export const useDockContext = () => React.useContext(DockContextType);

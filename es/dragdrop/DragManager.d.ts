@@ -1,4 +1,4 @@
-export declare type DragType = 'left' | 'right' | 'touch';
+export type DragType = "left" | "right" | "touch";
 interface DragDropComponent {
     element: HTMLElement;
     ownerDocument: Document;
@@ -38,8 +38,8 @@ export declare class DragState {
     _onMove(): void;
     _onDragEnd(canceled?: boolean): void;
 }
-export declare type DragHandler = (state: DragState) => void;
-export declare type DropHandler = (state: DragState) => any;
+export type DragHandler = (state: DragState) => void;
+export type DropHandler = (state: DragState) => any;
 interface DragHandlers {
     onDragOverT?: DragHandler;
     onDragLeaveT?: DragHandler;

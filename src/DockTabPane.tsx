@@ -1,14 +1,14 @@
-import classNames from "classnames";
-import { TabsProps } from "rc-tabs";
-import * as React from "react";
-import { TabPaneCache } from "./DockData";
-import { usePortalManager } from "./DockPortalManager";
+import classNames from "classnames"
+import { TabsProps } from "rc-tabs"
+import * as React from "react"
+import { TabPaneCache } from "./DockData"
+import { usePortalManager } from "./DockPortalManager"
 
-export type Tab = NonNullable<TabsProps["items"][0]>;
+export type Tab = NonNullable<TabsProps["items"][0]>
 
 interface DockTabPaneProps extends Tab {
-  cacheId?: string;
-  cached: boolean;
+  cacheId?: string
+  cached: boolean
 }
 
 const DockTabPane = ({
@@ -25,62 +25,62 @@ const DockTabPane = ({
   tabKey,
   children,
 }: DockTabPaneProps) => {
-  const { removeTabCache, getTabCache, updateTabCache } = usePortalManager();
+  const { removeTabCache, getTabCache, updateTabCache } = usePortalManager()
 
-  const [ref, setRef] = React.useState<null | HTMLElement>(null);
+  const [ref, setRef] = React.useState<null | HTMLElement>(null)
 
-  const cache = React.useRef<null | TabPaneCache>(null);
+  const cache = React.useRef<null | TabPaneCache>(null)
 
   React.useEffect(() => {
     if (cache.current) {
       if (!cached || cacheId !== cache.current.id) {
-        removeTabCache(cache.current.id, ref);
-        cache.current = null;
+        removeTabCache(cache.current.id, ref)
+        cache.current = null
       }
     }
     if (cached && ref) {
-      cache.current = getTabCache(cacheId, ref);
+      cache.current = getTabCache(cacheId, ref)
 
       if (!ref.contains(cache.current.div)) {
-        ref.appendChild(cache.current.div);
+        ref.appendChild(cache.current.div)
       }
-      updateTabCache(cache.current.id, children);
+      updateTabCache(cache.current.id, children)
     }
 
     return () => {
       if (cache.current) {
-        removeTabCache(cache.current.id, ref);
+        removeTabCache(cache.current.id, ref)
       }
-    };
-  }, [cached, children, cacheId, removeTabCache, getTabCache, updateTabCache]);
+    }
+  }, [cached, children, cacheId, removeTabCache, getTabCache, updateTabCache, ref])
 
-  let visited = false;
+  let visited = false
   if (active) {
-    visited = true;
+    visited = true
   } else if (destroyInactiveTabPane) {
-    visited = false;
+    visited = false
   }
 
-  const mergedStyle: React.CSSProperties = {};
+  const mergedStyle: React.CSSProperties = {}
   if (!active) {
     if (animated) {
-      mergedStyle.visibility = "hidden";
-      mergedStyle.height = 0;
-      mergedStyle.overflowY = "hidden";
+      mergedStyle.visibility = "hidden"
+      mergedStyle.height = 0
+      mergedStyle.overflowY = "hidden"
     } else {
-      mergedStyle.display = "none";
+      mergedStyle.display = "none"
     }
   }
 
   // when cached == undefined, it will still cache the children inside tabs component, but not across whole dock layout
   // when cached == false, children are destroyed when not active
-  const isRender = cached === false ? active : visited;
+  const isRender = cached === false ? active : visited
 
-  let renderChildren: React.ReactNode = null;
+  let renderChildren: React.ReactNode = null
   if (cached) {
-    renderChildren = null;
+    renderChildren = null
   } else if (isRender || forceRender) {
-    renderChildren = children;
+    renderChildren = children
   }
 
   return (
@@ -94,12 +94,12 @@ const DockTabPane = ({
       className={classNames(
         `${prefixCls}-tabpane`,
         active && `${prefixCls}-tabpane-active`,
-        className
+        className,
       )}
     >
       {(active || visited || forceRender) && renderChildren}
     </div>
-  );
-};
+  )
+}
 
-export default DockTabPane;
+export default DockTabPane

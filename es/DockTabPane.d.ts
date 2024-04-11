@@ -1,21 +1,9 @@
-import * as React from 'react';
-import { DockContext, TabPaneCache } from "./DockData";
-import { TabPaneProps } from "rc-tabs";
-interface DockTabPaneProps extends TabPaneProps {
+import { TabsProps } from "rc-tabs";
+import * as React from "react";
+export type Tab = NonNullable<TabsProps["items"][0]>;
+interface DockTabPaneProps extends Tab {
     cacheId?: string;
     cached: boolean;
 }
-export default class DockTabPane extends React.PureComponent<DockTabPaneProps, any> {
-    static contextType: React.Context<DockContext>;
-    context: DockContext;
-    _ref: HTMLDivElement;
-    getRef: (r: HTMLDivElement) => void;
-    updateCache(): void;
-    visited: boolean;
-    _cache: TabPaneCache;
-    render(): JSX.Element;
-    componentDidMount(): void;
-    componentDidUpdate(prevProps: Readonly<DockTabPaneProps>, prevState: Readonly<any>, snapshot?: any): void;
-    componentWillUnmount(): void;
-}
-export {};
+declare const DockTabPane: ({ cacheId, cached, prefixCls, forceRender, className, style, id, active, animated, destroyInactiveTabPane, tabKey, children, }: DockTabPaneProps) => React.JSX.Element;
+export default DockTabPane;

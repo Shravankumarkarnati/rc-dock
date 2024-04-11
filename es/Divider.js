@@ -47,32 +47,15 @@ function spiltSize(newSize, oldSize, children) {
     }
     return sizes;
 }
-export class Divider extends React.PureComponent {
-    constructor() {
-        super(...arguments);
-        this.startDrag = (e) => {
-            this.boxData = new BoxDataCache(this.props.getDividerData(this.props.idx));
-            e.startDrag(this.boxData.element, null);
-        };
-        this.dragMove = (e) => {
-            if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
-                this.dragMoveAll(e, e.dx, e.dy);
-            }
-            else {
-                this.dragMove2(e, e.dx, e.dy);
-            }
-        };
-        this.dragEnd = (e) => {
-            let { onDragEnd } = this.props;
-            this.boxData = null;
-            if (onDragEnd) {
-                onDragEnd();
-            }
-        };
-    }
-    dragMove2(e, dx, dy) {
-        let { isVertical, changeSizes } = this.props;
-        let { beforeDivider, afterDivider } = this.boxData;
+export const Divider = ({ changeSizes, getDividerData, idx, className, isVertical, onDragEnd, }) => {
+    const [boxData, setBoxData] = React.useState(null);
+    const startDrag = React.useCallback((e) => {
+        const _boxData = new BoxDataCache(getDividerData(idx));
+        e.startDrag(_boxData.element, null);
+        setBoxData(_boxData);
+    }, [getDividerData, idx]);
+    const dragMove2 = React.useCallback((e, dx, dy) => {
+        let { beforeDivider, afterDivider } = boxData;
         if (!(beforeDivider.length && afterDivider.length)) {
             // invalid input
             return;
@@ -97,10 +80,9 @@ export class Divider extends React.PureComponent {
         sizes[beforeDivider.length - 1] = leftSize;
         sizes[beforeDivider.length] = rightSize;
         changeSizes(sizes);
-    }
-    dragMoveAll(e, dx, dy) {
-        let { isVertical, changeSizes } = this.props;
-        let { beforeSize, beforeMinSize, afterSize, afterMinSize, beforeDivider, afterDivider } = this.boxData;
+    }, [isVertical, changeSizes, boxData]);
+    const dragMoveAll = React.useCallback((e, dx, dy) => {
+        let { beforeSize, beforeMinSize, afterSize, afterMinSize, beforeDivider, afterDivider } = boxData;
         let d = isVertical ? dy : dx;
         let newBeforeSize = beforeSize + d;
         let newAfterSize = afterSize - d;
@@ -116,12 +98,25 @@ export class Divider extends React.PureComponent {
             newAfterSize = beforeSize + afterSize - beforeMinSize;
         }
         changeSizes(spiltSize(newBeforeSize, beforeSize, beforeDivider).concat(spiltSize(newAfterSize, afterSize, afterDivider)));
-    }
-    render() {
-        let { className } = this.props;
-        if (!className) {
-            className = 'dock-divider';
+    }, [isVertical, changeSizes, boxData]);
+    const dragMove = React.useCallback((e) => {
+        if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
+            dragMoveAll(e, e.dx, e.dy);
         }
-        return (React.createElement(DragDropDiv, { className: className, onDragStartT: this.startDrag, onDragMoveT: this.dragMove, onDragEndT: this.dragEnd }));
+        else {
+            dragMove2(e, e.dx, e.dy);
+        }
+    }, [dragMoveAll, dragMove2]);
+    const dragEnd = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (e) => {
+        setBoxData(null);
+        if (onDragEnd) {
+            onDragEnd();
+        }
+    }, [onDragEnd]);
+    if (!className) {
+        className = "dock-divider";
     }
-}
+    return (React.createElement(DragDropDiv, { className: className, onDragStartT: startDrag, onDragMoveT: dragMove, onDragEndT: dragEnd }));
+};

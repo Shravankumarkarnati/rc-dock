@@ -1,5 +1,6 @@
 import * as React from "react";
 import { DockContext, DropDirection, PanelData, TabData } from "./DockData";
+import { Tab } from "./DockTabPane";
 import * as DragManager from "./dragdrop/DragManager";
 export declare class TabCache {
     _ref: HTMLDivElement;
@@ -8,7 +9,7 @@ export declare class TabCache {
     getHitAreaRef: (r: HTMLDivElement) => void;
     data: TabData;
     context: DockContext;
-    content: React.ReactElement;
+    content: Tab;
     constructor(context: DockContext);
     setData(data: TabData): boolean;
     onCloseClick: (e: React.MouseEvent) => void;
@@ -17,7 +18,7 @@ export declare class TabCache {
     onDragLeave: (e: DragManager.DragState) => void;
     onDrop: (e: DragManager.DragState) => void;
     getDropDirection(e: DragManager.DragState): DropDirection;
-    render(): React.ReactElement;
+    render(): Tab;
     destroy(): void;
 }
 interface Props {
@@ -26,18 +27,5 @@ interface Props {
     onPanelDragMove: DragManager.DragHandler;
     onPanelDragEnd: DragManager.DragHandler;
 }
-export declare class DockTabs extends React.PureComponent<Props> {
-    static contextType: React.Context<DockContext>;
-    static readonly propKeys: string[];
-    context: DockContext;
-    _cache: Map<string, TabCache>;
-    cachedTabs: TabData[];
-    updateTabs(tabs: TabData[]): void;
-    onMaximizeClick: (e: React.MouseEvent) => void;
-    onNewWindowClick: () => void;
-    addNewWindowMenu(element: React.ReactElement, showWithLeftClick: boolean): JSX.Element;
-    renderTabBar: (props: any, TabNavList: React.ComponentType) => JSX.Element;
-    onTabChange: (activeId: string) => void;
-    render(): React.ReactNode;
-}
+export declare const DockTabs: ({ panelData, onPanelDragEnd, onPanelDragMove, onPanelDragStart, }: Props) => React.JSX.Element;
 export {};

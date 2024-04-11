@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from "react"
 import {
   BoxData,
   DockMode,
@@ -7,19 +7,19 @@ import {
   TabData,
   placeHolderStyle,
   useDockContext,
-} from "./DockData";
-import { DragDropDiv } from "./dragdrop/DragDropDiv";
-import { DragState } from "./dragdrop/DragManager";
+} from "./DockData"
+import { DragDropDiv } from "./dragdrop/DragDropDiv"
+import { DragState } from "./dragdrop/DragManager"
 
 interface DockDropSquareProps {
-  direction: DropDirection;
-  depth?: number;
-  panelData: PanelData;
-  panelElement: HTMLElement;
+  direction: DropDirection
+  depth?: number
+  panelData: PanelData
+  panelElement: HTMLElement
 }
 
 interface DockDropSquareState {
-  dropping: boolean;
+  dropping: boolean
 }
 
 export const DockDropSquare = ({
@@ -28,69 +28,68 @@ export const DockDropSquare = ({
   depth,
   panelData,
 }: DockDropSquareProps) => {
-  const { setDropRect, getDockId, dockMove } = useDockContext();
+  const { setDropRect, getDockId, dockMove } = useDockContext()
 
   const [state, setState] = React.useState<DockDropSquareState>({
     dropping: false,
-  });
+  })
 
   const onDragOver = React.useCallback(
     (e: DragState) => {
-      let targetElement = panelElement;
-      setState({ dropping: true });
+      let targetElement = panelElement
+      setState({ dropping: true })
       for (let i = 0; i < depth; ++i) {
-        targetElement = targetElement.parentElement;
+        targetElement = targetElement.parentElement
       }
       if (panelData.group === placeHolderStyle && direction !== "float") {
         // place holder panel should always have full size drop rect
-        setDropRect(targetElement, "middle", this, e);
+        setDropRect(targetElement, "middle", this, e)
       } else {
-        let dockId = getDockId();
-        let panelSize: [number, number] = DragState.getData(
-          "panelSize",
-          dockId
-        );
-        setDropRect(targetElement, direction, this, e, panelSize);
+        let dockId = getDockId()
+        let panelSize: [number, number] = DragState.getData("panelSize", dockId)
+        setDropRect(targetElement, direction, this, e, panelSize)
       }
-      e.accept("");
+      e.accept("")
     },
-    [panelElement, direction, depth, panelData, setDropRect, getDockId]
-  );
+    [panelElement, direction, depth, panelData, setDropRect, getDockId],
+  )
 
   const onDragLeave = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (e: DragState) => {
-      setState({ dropping: false });
-      setDropRect(null, "remove", this);
+      setState({ dropping: false })
+      setDropRect(null, "remove", this)
     },
-    [setDropRect]
-  );
+    [setDropRect],
+  )
 
   const onDrop = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (e: DragState) => {
-      let dockId = getDockId();
-      let source: TabData | PanelData = DragState.getData("tab", dockId);
+      let dockId = getDockId()
+      let source: TabData | PanelData = DragState.getData("tab", dockId)
       if (!source) {
-        source = DragState.getData("panel", dockId);
+        source = DragState.getData("panel", dockId)
       }
       if (source) {
-        let target: PanelData | BoxData = panelData;
+        let target: PanelData | BoxData = panelData
         for (let i = 0; i < depth; ++i) {
-          target = target.parent;
+          target = target.parent
         }
-        dockMove(source, target, direction);
+        dockMove(source, target, direction)
       }
     },
-    [panelData, direction, depth, dockMove, getDockId]
-  );
+    [panelData, direction, depth, dockMove, getDockId],
+  )
 
-  let classes = ["dock-drop-square"];
-  classes.push(`dock-drop-${direction}`);
+  let classes = ["dock-drop-square"]
+  classes.push(`dock-drop-${direction}`)
   if (depth) {
-    classes.push(`dock-drop-deep`);
+    classes.push(`dock-drop-deep`)
   }
 
   if (state.dropping) {
-    classes.push("dock-drop-square-dropping");
+    classes.push("dock-drop-square-dropping")
   }
 
   return (
@@ -102,38 +101,32 @@ export const DockDropSquare = ({
     >
       <div className="dock-drop-square-box" />
     </DragDropDiv>
-  );
-};
-
-interface DockDropLayerProps {
-  panelData: PanelData;
-  panelElement: HTMLElement;
-  dropFromPanel: PanelData;
+  )
 }
 
-export const DockDropLayer = ({
-  panelData,
-  panelElement,
-  dropFromPanel,
-}: DockDropLayerProps) => {
-  const { getDockId, getGroup } = useDockContext();
+interface DockDropLayerProps {
+  panelData: PanelData
+  panelElement: HTMLElement
+  dropFromPanel: PanelData
+}
 
-  let dockId = getDockId();
+export const DockDropLayer = ({ panelData, panelElement, dropFromPanel }: DockDropLayerProps) => {
+  const { getDockId, getGroup } = useDockContext()
 
-  let children: React.ReactNode[] = [];
+  let dockId = getDockId()
+
+  let children: React.ReactNode[] = []
 
   // check if it's whole panel dragging
-  let draggingPanel = DragState.getData("panel", dockId);
+  let draggingPanel = DragState.getData("panel", dockId)
 
-  let fromGroup = getGroup(dropFromPanel.group);
+  let fromGroup = getGroup(dropFromPanel.group)
   if (
     fromGroup.floatable !== false &&
     (!draggingPanel ||
       (!draggingPanel.panelLock && // panel with panelLock can't float
         draggingPanel.parent?.mode !== "float" && // don't show float drop when over a float panel
-        !(
-          fromGroup.floatable === "singleTab" && draggingPanel.tabs.length > 1
-        ))) // singleTab can float only with one tab
+        !(fromGroup.floatable === "singleTab" && draggingPanel.tabs.length > 1))) // singleTab can float only with one tab
   ) {
     children.push(
       <DockDropSquare
@@ -141,16 +134,16 @@ export const DockDropLayer = ({
         direction="float"
         panelData={panelData}
         panelElement={panelElement}
-      />
-    );
+      />,
+    )
   }
 
   if (draggingPanel !== panelData && !fromGroup.disableDock) {
     // don't drop panel to itself
 
     // 4 direction base drag square
-    utils.addDepthSquare(children, "horizontal", panelData, panelElement, 0);
-    utils.addDepthSquare(children, "vertical", panelData, panelElement, 0);
+    utils.addDepthSquare(children, "horizontal", panelData, panelElement, 0)
+    utils.addDepthSquare(children, "vertical", panelData, panelElement, 0)
 
     if (
       !draggingPanel?.panelLock &&
@@ -164,28 +157,22 @@ export const DockDropLayer = ({
           direction="middle"
           panelData={panelData}
           panelElement={panelElement}
-        />
-      );
+        />,
+      )
     }
 
-    let box = panelData.parent;
+    let box = panelData.parent
     if (box && box.children.length > 1) {
       // deeper drop
-      utils.addDepthSquare(children, box.mode, panelData, panelElement, 1);
+      utils.addDepthSquare(children, box.mode, panelData, panelElement, 1)
       if (box.parent) {
-        utils.addDepthSquare(
-          children,
-          box.parent.mode,
-          panelData,
-          panelElement,
-          2
-        );
+        utils.addDepthSquare(children, box.parent.mode, panelData, panelElement, 2)
       }
     }
   }
 
-  return <div className="dock-drop-layer">{children}</div>;
-};
+  return <div className="dock-drop-layer">{children}</div>
+}
 
 const utils = {
   addDepthSquare(
@@ -193,7 +180,7 @@ const utils = {
     mode: DockMode,
     panelData: PanelData,
     panelElement: HTMLElement,
-    depth?: number
+    depth?: number,
   ) {
     if (mode === "horizontal") {
       children.push(
@@ -203,8 +190,8 @@ const utils = {
           depth={depth}
           panelData={panelData}
           panelElement={panelElement}
-        />
-      );
+        />,
+      )
       children.push(
         <DockDropSquare
           key={`bottom${depth}`}
@@ -212,8 +199,8 @@ const utils = {
           depth={depth}
           panelData={panelData}
           panelElement={panelElement}
-        />
-      );
+        />,
+      )
     } else {
       children.push(
         <DockDropSquare
@@ -222,8 +209,8 @@ const utils = {
           depth={depth}
           panelData={panelData}
           panelElement={panelElement}
-        />
-      );
+        />,
+      )
       children.push(
         <DockDropSquare
           key={`right${depth}`}
@@ -231,8 +218,8 @@ const utils = {
           depth={depth}
           panelData={panelData}
           panelElement={panelElement}
-        />
-      );
+        />,
+      )
     }
   },
-};
+}

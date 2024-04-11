@@ -1,20 +1,18 @@
-import * as React from "react";
-import { BoxData } from "./DockData";
-import { DockPanel } from "./DockPanel";
+import * as React from "react"
+import { BoxData } from "./DockData"
+import { DockPanel } from "./DockPanel"
 
 interface Props {
-  boxData: BoxData;
+  boxData: BoxData
 }
 
 export const FloatBox = ({ boxData: { children } }: Props) => {
-  let childrenRender: React.ReactNode[] = [];
+  let childrenRender: React.ReactNode[] = []
   for (let child of children) {
     if ("tabs" in child) {
-      childrenRender.push(
-        <DockPanel size={child.size} panelData={child} key={child.id} />
-      );
+      childrenRender.push(<DockPanel size={child.size} panelData={child} key={child.id} />)
     }
   }
 
-  return <div className="dock-box dock-fbox">{childrenRender}</div>;
-};
+  return <div className="dock-box dock-fbox">{childrenRender}</div>
+}

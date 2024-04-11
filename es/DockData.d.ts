@@ -7,7 +7,7 @@ export interface TabGroup {
      *
      * default: false
      */
-    floatable?: boolean | 'singleTab';
+    floatable?: boolean | "singleTab";
     /**
      * Whether tab can be converted to native window, only works when floatable is true.
      *
@@ -83,7 +83,7 @@ interface DockDataBase {
     minWidth?: number;
     minHeight?: number;
 }
-export declare type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
+export type DockMode = "horizontal" | "vertical" | "float" | "window" | "maximize";
 export interface TabBase {
     /**
      * id must be unique
@@ -242,7 +242,7 @@ export interface LayoutData extends LayoutBase {
      */
     loadedFrom?: LayoutBase;
 }
-export declare type DropDirection = 'left' | 'right' | 'bottom' | 'top' | 'middle' | 'remove' | 'before-tab' | 'after-tab' | 'float' | 'front' | 'maximize' | 'new-window' | 'move' | 'active' | 'update';
+export type DropDirection = "left" | "right" | "bottom" | "top" | "middle" | "remove" | "before-tab" | "after-tab" | "float" | "front" | "maximize" | "new-window" | "move" | "active" | "update";
 export interface FloatSize {
     width: number;
     height: number;
@@ -251,12 +251,12 @@ export interface FloatPosition extends FloatSize {
     left: number;
     top: number;
 }
-export declare type LayoutSize = FloatSize;
+export type LayoutSize = FloatSize;
 export interface DockContext {
     /** @ignore */
     getDockId(): any;
     /** @ignore */
-    useEdgeDrop(): boolean;
+    shouldUseEdgeDrop(): boolean;
     /** @ignore */
     setDropRect(element: HTMLElement, direction?: DropDirection, source?: any, event?: {
         clientX: number;
@@ -306,18 +306,11 @@ export interface DockContext {
      */
     navigateToPanel(fromElement: HTMLElement, direction?: string): void;
     /** @ignore */
-    getTabCache(id: string, owner: any): TabPaneCache;
-    /** @ignore */
-    removeTabCache(id: string, owner: any): void;
-    /** @ignore */
-    updateTabCache(id: string, portal: React.ReactNode): void;
-    /** @ignore */
     getRootElement(): HTMLDivElement;
 }
 /** @ignore */
 export declare const DockContextType: React.Context<DockContext>;
 /** @ignore */
 export declare const DockContextProvider: React.Provider<DockContext>;
-/** @ignore */
-export declare const DockContextConsumer: React.Consumer<DockContext>;
+export declare const useDockContext: () => DockContext;
 export {};

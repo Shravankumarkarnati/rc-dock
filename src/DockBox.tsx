@@ -1,75 +1,74 @@
-import * as React from "react";
-import { Divider, DividerChild } from "./Divider";
-import { BoxData, useDockContext } from "./DockData";
-import { DockPanel } from "./DockPanel";
-import { useForceUpdate } from "./UseForceUpdate";
+import * as React from "react"
+import { Divider, DividerChild } from "./Divider"
+import { BoxData, useDockContext } from "./DockData"
+import { DockPanel } from "./DockPanel"
+import { useForceUpdate } from "./UseForceUpdate"
 
 interface Props {
-  size: number;
-  boxData: BoxData;
+  size: number
+  boxData: BoxData
 }
 
 export const DockBox = ({ boxData }: Props) => {
-  const { onSilentChange } = useDockContext();
+  const { onSilentChange } = useDockContext()
 
-  const forceUpdate = useForceUpdate();
-  const [ref, setRef] = React.useState<null | HTMLDivElement>(null);
+  const forceUpdate = useForceUpdate()
+  const [ref, setRef] = React.useState<null | HTMLDivElement>(null)
 
   const getDividerData = React.useCallback(
     (idx: number) => {
       if (!ref) {
-        return null;
+        return null
       }
-      let { children, mode } = boxData;
-      let nodes = ref.childNodes;
+      let { children, mode } = boxData
+      let nodes = ref.childNodes
       if (nodes.length !== children.length * 2 - 1) {
-        return;
+        return
       }
-      let dividerChildren: DividerChild[] = [];
+      let dividerChildren: DividerChild[] = []
       for (let i = 0; i < children.length; ++i) {
         if (mode === "vertical") {
           dividerChildren.push({
             size: (nodes[i * 2] as HTMLElement).offsetHeight,
             minSize: children[i].minHeight,
-          });
+          })
         } else {
           dividerChildren.push({
             size: (nodes[i * 2] as HTMLElement).offsetWidth,
             minSize: children[i].minWidth,
-          });
+          })
         }
       }
       return {
         element: ref,
         beforeDivider: dividerChildren.slice(0, idx),
         afterDivider: dividerChildren.slice(idx),
-      };
+      }
     },
-    [boxData, ref]
-  );
+    [boxData, ref],
+  )
 
   const changeSizes = React.useCallback(
     (sizes: number[]) => {
-      let { children } = boxData;
+      let { children } = boxData
       if (children.length !== sizes.length) {
-        return;
+        return
       }
       for (let i = 0; i < children.length; ++i) {
-        children[i].size = sizes[i];
+        children[i].size = sizes[i]
       }
-      forceUpdate();
+      forceUpdate()
     },
-    [boxData]
-  );
+    [boxData, forceUpdate],
+  )
 
   const onDragEnd = React.useCallback(() => {
-    onSilentChange(null, "move");
-  }, [onSilentChange]);
+    onSilentChange(null, "move")
+  }, [onSilentChange])
 
-  let { minWidth, minHeight, size, children, mode, id, widthFlex, heightFlex } =
-    boxData;
-  let isVertical = mode === "vertical";
-  let childrenRender: React.ReactNode[] = [];
+  let { minWidth, minHeight, size, children, mode, id, widthFlex, heightFlex } = boxData
+  let isVertical = mode === "vertical"
+  let childrenRender: React.ReactNode[] = []
   for (let i = 0; i < children.length; ++i) {
     if (i > 0) {
       childrenRender.push(
@@ -80,39 +79,35 @@ export const DockBox = ({ boxData }: Props) => {
           onDragEnd={onDragEnd}
           getDividerData={getDividerData}
           changeSizes={changeSizes}
-        />
-      );
+        />,
+      )
     }
-    let child = children[i];
+    let child = children[i]
     if ("tabs" in child) {
-      childrenRender.push(
-        <DockPanel size={child.size} panelData={child} key={child.id} />
-      );
+      childrenRender.push(<DockPanel size={child.size} panelData={child} key={child.id} />)
       // render DockPanel
     } else if ("children" in child) {
-      childrenRender.push(
-        <DockBox size={child.size} boxData={child} key={child.id} />
-      );
+      childrenRender.push(<DockBox size={child.size} boxData={child} key={child.id} />)
     }
   }
-  let cls: string;
-  let flex = 1;
+  let cls: string
+  let flex = 1
   if (mode === "vertical") {
-    cls = "dock-box dock-vbox";
+    cls = "dock-box dock-vbox"
     if (widthFlex != null) {
-      flex = widthFlex;
+      flex = widthFlex
     }
   } else {
     // since special boxes dont reuse this render function, this can only be horizontal box
-    cls = "dock-box dock-hbox";
+    cls = "dock-box dock-hbox"
     if (heightFlex != null) {
-      flex = heightFlex;
+      flex = heightFlex
     }
   }
-  let flexGrow = flex * size;
-  let flexShrink = flex * 1000000;
+  let flexGrow = flex * size
+  let flexShrink = flex * 1000000
   if (flexShrink < 1) {
-    flexShrink = 1;
+    flexShrink = 1
   }
 
   return (
@@ -128,5 +123,5 @@ export const DockBox = ({ boxData }: Props) => {
     >
       {childrenRender}
     </div>
-  );
-};
+  )
+}

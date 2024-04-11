@@ -1,5 +1,5 @@
-import * as React from "react";
-import { Filter } from "./Algorithm";
+import * as React from "react"
+import { Filter } from "./Algorithm"
 
 export interface TabGroup {
   /**
@@ -8,41 +8,41 @@ export interface TabGroup {
    *
    * default: false
    */
-  floatable?: boolean | "singleTab";
+  floatable?: boolean | "singleTab"
 
   /**
    * Whether tab can be converted to native window, only works when floatable is true.
    *
    * default: false
    */
-  newWindow?: boolean;
+  newWindow?: boolean
 
   /**
    * Disable dock, so the panel will only work in float mode.
    *
    * default: false
    */
-  disableDock?: boolean;
+  disableDock?: boolean
 
   /**
    * Whether tab can be maximized
    *
    * default: false
    */
-  maximizable?: boolean;
+  maximizable?: boolean
 
   /**
    * When tabs are locked, you can not drag tab to create new panel, but it can still be dropped into a different panel if they have the same tab group.
    *
    * default false
    */
-  tabLocked?: boolean;
+  tabLocked?: boolean
   /**
    * Whether to show animation effect when switch tabs.
    *
    * default true
    */
-  animated?: boolean;
+  animated?: boolean
 
   /**
    * Generate extra content show in the right side of tab bar.
@@ -50,137 +50,132 @@ export interface TabGroup {
    * panelExtra can also be used as a listener on panel state changes,
    * If you don't need to show extra content in this case, just return null.
    */
-  panelExtra?: (panel: PanelData, context: DockContext) => React.ReactElement;
+  panelExtra?: (panel: PanelData, context: DockContext) => React.ReactElement
 
   /**
    * When creating float panel from dragging, DockLayout would use the original panel's size.
    * Use this to defined the [min, max] allowed with for the default size of a float panel.
    * If not specified, minWidth = 100, maxWidth = 600
    */
-  preferredFloatWidth?: [number, number];
+  preferredFloatWidth?: [number, number]
   /**
    * When creating float panel from dragging, DockLayout would use the original panel's size.
    * Use this to defined the [min, max] allowed height for the default size of a float panel.
    * If not specified, minHeight = 50, maxHeight = 500
    */
-  preferredFloatHeight?: [number, number];
+  preferredFloatHeight?: [number, number]
 
   /**
    * Override the default flex grow and flex shrink for panel width
    */
-  widthFlex?: number;
+  widthFlex?: number
   /**
    * Override the default flex grow and flex shrink for panel height
    */
-  heightFlex?: number;
+  heightFlex?: number
   /**
    * Override the default `moreIcon`
    */
-  moreIcon?: React.ReactNode;
+  moreIcon?: React.ReactNode
 }
 
 /** @ignore */
 export const defaultGroup: TabGroup = {
   floatable: true,
   maximizable: true,
-};
+}
 /** @ignore */
-export const placeHolderStyle = "place-holder";
+export const placeHolderStyle = "place-holder"
 /** @ignore */
-export const maximePlaceHolderId = "-maximized-placeholder-";
+export const maximePlaceHolderId = "-maximized-placeholder-"
 /** @ignore */
 export const placeHolderGroup: TabGroup = {
   floatable: false,
-};
+}
 
 /** @ignore */
 interface DockDataBase {
-  minWidth?: number;
-  minHeight?: number;
+  minWidth?: number
+  minHeight?: number
 }
 
-export type DockMode =
-  | "horizontal"
-  | "vertical"
-  | "float"
-  | "window"
-  | "maximize";
+export type DockMode = "horizontal" | "vertical" | "float" | "window" | "maximize"
 
 export interface TabBase {
   /**
    * id must be unique
    */
-  id?: string;
+  id?: string
 }
 
 export interface PanelBase {
   /**
    * id will be auto generated if it's undefined
    */
-  id?: string;
+  id?: string
 
   /**
    * The size in dock box,
    * width when in horizontal layout and height when in vertical layout
    */
-  size?: number;
-  tabs: TabBase[];
+  size?: number
+  tabs: TabBase[]
   /**
    * The id of current tab
    */
-  activeId?: string;
+  activeId?: string
 
   /**
    * if group is undefined, it will be set to the group name of first tab
    */
-  group?: string;
+  group?: string
 
   /** float mode only */
-  x?: number;
+  x?: number
   /** float mode only */
-  y?: number;
+  y?: number
   /** float mode only */
-  z?: number;
+  z?: number
   /** float mode only */
-  w?: number;
+  w?: number
   /** float mode only */
-  h?: number;
+  h?: number
 }
 
 export interface BoxBase {
   /**
    * id will be auto generated if it's undefined
    */
-  id?: string;
-  mode: DockMode;
+  id?: string
+  mode: DockMode
 
   /**
    * The size in dock box,
    * width when in horizontal layout and height when in vertical layout
    */
-  size?: number;
-  children: (BoxBase | PanelBase)[];
+  size?: number
+  children: (BoxBase | PanelBase)[]
 }
 
 export interface LayoutBase {
-  dockbox: BoxBase;
-  floatbox?: BoxBase;
-  windowbox?: BoxBase;
-  maxbox?: BoxBase;
+  dockbox: BoxBase
+  floatbox?: BoxBase
+  windowbox?: BoxBase
+  maxbox?: BoxBase
 }
 
 interface BoxChild extends DockDataBase {
-  parent?: BoxData;
-  widthFlex?: number;
-  heightFlex?: number;
+  parent?: BoxData
+  widthFlex?: number
+  heightFlex?: number
 }
 
 /**
  * a box is the layout element that contains other boxes or panels
  */
 export interface BoxData extends BoxBase, BoxChild {
-  mode: DockMode;
-  children: (BoxData | PanelData)[];
+  mode: DockMode
+  children: (BoxData | PanelData)[]
 }
 
 export interface TabData extends TabBase, DockDataBase {
@@ -189,35 +184,35 @@ export interface TabData extends TabBase, DockDataBase {
    * - tabs with different tab groups can not be put in same panel
    * - more options for the group can be defined as TabGroup in [[LayoutProps.groups]]
    */
-  group?: string;
+  group?: string
 
   /** @ignore */
-  parent?: PanelData;
+  parent?: PanelData
   /**
    * title that's shown in the tab of the panel header
    */
-  title: React.ReactChild;
-  content: React.ReactElement | ((tab: TabData) => React.ReactElement);
-  closable?: boolean;
+  title: React.ReactChild
+  content: React.ReactElement | ((tab: TabData) => React.ReactElement)
+  closable?: boolean
 
   /**
    * - when value is true: content will always reuse the react component thus allows the component to keep its internal state
    * - when value is false: content will be destroyed when it's not visible, [[TabGroup.animated]] should be set to false, otherwise animation would show blank pages
    * - when value is undefined: content is rendered normally as react component
    */
-  cached?: boolean;
+  cached?: boolean
   /**
    * @deprecated no longer needed
    */
-  cacheContext?: React.Context<any>;
+  cacheContext?: React.Context<any>
 }
 
 interface PanelLock {
   /** override the default style */
-  panelStyle?: string;
+  panelStyle?: string
 
-  minWidth?: number;
-  minHeight?: number;
+  minWidth?: number
+  minHeight?: number
 
   /**
    * override the default extra content from TabGroup.panelExtra,
@@ -225,68 +220,68 @@ interface PanelLock {
    * panelExtra can also be used as a listener on panel state changes,
    * if you don't need to show extra content in this case, just return null
    */
-  panelExtra?: (panel: PanelData) => React.ReactElement;
+  panelExtra?: (panel: PanelData) => React.ReactElement
 
   /**
    * override the default flex grow and flex shrink for panel width
    */
-  widthFlex?: number;
+  widthFlex?: number
   /**
    * override the default flex grow and flex shrink for panel height
    */
-  heightFlex?: number;
+  heightFlex?: number
 }
 
 /**
  * a panel is a visiaul container with tabs button in the title bar
  */
 export interface PanelData extends PanelBase, BoxChild {
-  parent?: BoxData;
+  parent?: BoxData
 
-  tabs: TabData[];
+  tabs: TabData[]
 
   /**
    * addition information of a panel,
    * This prevents the panel from being removed when there is no tab inside
    * a locked panel can not be moved to float layer either
    */
-  panelLock?: PanelLock; // if not null, panel won't disappear even when all children are gone
+  panelLock?: PanelLock // if not null, panel won't disappear even when all children are gone
 }
 
 export interface TabPaneCache {
-  id: string;
-  div: HTMLDivElement;
-  owner: any;
-  portal?: React.ReactPortal;
+  id: string
+  div: HTMLDivElement
+  owner: any
+  portal?: React.ReactPortal
 }
 
 export interface LayoutData extends LayoutBase {
   /**
    * dock box
    */
-  dockbox: BoxData;
+  dockbox: BoxData
   /**
    * float box,
    * Children must be PanelData, child box is not allowed
    */
-  floatbox?: BoxData;
+  floatbox?: BoxData
 
   /**
    * window box,
    * Children must be PanelData, child box is not allowed
    */
-  windowbox?: BoxData;
+  windowbox?: BoxData
 
   /**
    * The maximized panel,
    * only one child allowed, child must be PanelData
    */
-  maxbox?: BoxData;
+  maxbox?: BoxData
 
   /** @ignore
    * keep the last loaded layout to prevent unnecessary reloading
    */
-  loadedFrom?: LayoutBase;
+  loadedFrom?: LayoutBase
 }
 
 export type DropDirection =
@@ -304,26 +299,26 @@ export type DropDirection =
   | "new-window"
   | "move" // dockbox or float panel moved, or float panel resized
   | "active" // become active tab
-  | "update"; // tab updated with updateTab
+  | "update" // tab updated with updateTab
 
 export interface FloatSize {
-  width: number;
-  height: number;
+  width: number
+  height: number
 }
 
 export interface FloatPosition extends FloatSize {
-  left: number;
-  top: number;
+  left: number
+  top: number
 }
 
-export type LayoutSize = FloatSize;
+export type LayoutSize = FloatSize
 
 export interface DockContext {
   /** @ignore */
-  getDockId(): any;
+  getDockId(): any
 
   /** @ignore */
-  useEdgeDrop(): boolean;
+  shouldUseEdgeDrop(): boolean
 
   /** @ignore */
   setDropRect(
@@ -331,18 +326,18 @@ export interface DockContext {
     direction?: DropDirection,
     source?: any,
     event?: { clientX: number; clientY: number },
-    panelSize?: [number, number]
-  ): void;
+    panelSize?: [number, number],
+  ): void
 
   /** @ignore */
-  getLayoutSize(): LayoutSize;
+  getLayoutSize(): LayoutSize
 
   /** @ignore
    * When a state change happen to the layout that's handled locally, like inside DockPanel or DockBox.
    * It still need to tell the context there is a change so DockLayout can call onLayoutChange callback.
    * This usually happens on dragEnd event of size/location change.
    */
-  onSilentChange(currentTabId?: string, direction?: DropDirection): void;
+  onSilentChange(currentTabId?: string, direction?: DropDirection): void
 
   /**
    * Move a tab or a panel, if source or target is already in the layout, you can use the find method to get it with id first
@@ -360,18 +355,18 @@ export interface DockContext {
     source: TabData | PanelData,
     target: string | TabData | PanelData | BoxData | null,
     direction: DropDirection,
-    floatPosition?: FloatPosition
-  ): void;
+    floatPosition?: FloatPosition,
+  ): void
 
   /**
    * Get the TabGroup defined in defaultLayout
    */
-  getGroup(name: string): TabGroup;
+  getGroup(name: string): TabGroup
 
   /**
    * Find PanelData or TabData by id
    */
-  find(id: string, filter?: Filter): PanelData | TabData | BoxData | undefined;
+  find(id: string, filter?: Filter): PanelData | TabData | BoxData | undefined
 
   /**
    * Update a tab with new TabData
@@ -380,22 +375,22 @@ export interface DockContext {
    * @param makeActive whether to make the tab the active child of parent panel
    * @returns returns false if the tab is not found
    */
-  updateTab(id: string, newTab: TabData | null, makeActive?: boolean): boolean;
+  updateTab(id: string, newTab: TabData | null, makeActive?: boolean): boolean
 
   /**
    * Move focus to a dockpanel nearby
    * @param fromElement
    * @param direction
    */
-  navigateToPanel(fromElement: HTMLElement, direction?: string): void;
+  navigateToPanel(fromElement: HTMLElement, direction?: string): void
 
   /** @ignore */
-  getRootElement(): HTMLDivElement;
+  getRootElement(): HTMLDivElement
 }
 
 /** @ignore */
-export const DockContextType = React.createContext<DockContext>(null!);
+export const DockContextType = React.createContext<DockContext>(null!)
 /** @ignore */
-export const DockContextProvider = DockContextType.Provider;
+export const DockContextProvider = DockContextType.Provider
 
-export const useDockContext = () => React.useContext(DockContextType);
+export const useDockContext = () => React.useContext(DockContextType)
