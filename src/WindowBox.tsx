@@ -1,6 +1,7 @@
 import * as React from "react"
 import { BoxData } from "./DockData"
 import { WindowPanel } from "./WindowPanel"
+import { BrowserPopupWindow } from "./packages/rc-new-window"
 
 interface Props {
   boxData: BoxData
@@ -17,6 +18,4 @@ export const WindowBox = ({ boxData: { children } }: Props) => {
   return <>{childrenRender}</>
 }
 
-export const isWindowBoxEnabled = () =>
-  typeof window === "object" &&
-  (window?.navigator.platform === "Win32" || window?.navigator.platform === "MacIntel")
+export const isWindowBoxEnabled = () => BrowserPopupWindow.popupSupported

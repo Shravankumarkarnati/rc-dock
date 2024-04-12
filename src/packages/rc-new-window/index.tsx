@@ -235,3 +235,4 @@ function toWindowFeatures(obj: any) {
 export default NewWindow
 
 export * from "./ScreenPosition"
+export * from "./BrowserPopupWindow"
