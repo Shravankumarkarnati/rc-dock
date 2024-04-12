@@ -19,28 +19,30 @@ export const WindowPanel = ({ panelData }: Props) => {
     }
   }, [])
 
+  let { w, h, x, y } = panelData
+
   const onUnload = React.useCallback(() => {
+    let newPanelData = panelData
     let layoutRoot = getRootElement()
     const rect = mapWindowToElement(layoutRoot, window.current)
+
     if (rect.width > 0 && rect.height > 0) {
-      panelData.x = rect.left
-      panelData.y = rect.top
-      panelData.w = rect.width
-      panelData.h = rect.height
+      newPanelData.x = rect.left
+      newPanelData.y = rect.top
+      newPanelData.w = rect.width
+      newPanelData.h = rect.height
     }
-    dockMove(panelData, null, "float")
+    dockMove(newPanelData, null, "float")
   }, [panelData, dockMove, getRootElement])
 
   const initPopupInnerRect = React.useCallback(() => {
     return mapElementToScreenRect(getRootElement(), {
-      left: panelData.x,
-      top: panelData.y,
-      width: panelData.w,
-      height: panelData.h,
+      left: x,
+      top: y,
+      width: w,
+      height: h,
     }) as any
-  }, [getRootElement, panelData])
-
-  let { w, h } = panelData
+  }, [getRootElement, h, w, x, y])
 
   return (
     <NewWindow

@@ -1,12 +1,12 @@
 import classNames from "classnames"
 import { TabsProps } from "rc-tabs"
 import * as React from "react"
-import { TabPaneCache } from "./DockData"
 import { usePortalManager } from "./DockPortalManager"
+import { TabPaneCache } from "./DockData"
 
 export type Tab = NonNullable<TabsProps["items"][0]>
 
-interface DockTabPaneProps extends Tab {
+interface DockTabPaneProps extends Omit<Tab, "label"> {
   cacheId?: string
   cached: boolean
 }

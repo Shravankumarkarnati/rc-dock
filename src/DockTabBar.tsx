@@ -2,7 +2,7 @@ import * as React from "react"
 import { DragDropDiv } from "./dragdrop/DragDropDiv"
 import * as DragManager from "./dragdrop/DragManager"
 import type { TabNavListProps } from "rc-tabs/lib/TabNavList"
-import { DockContextType } from "./DockData"
+import { useDockContext } from "./DockData"
 
 /**
  * @return returns true if navigation is handled in local tab move, otherwise returns false
@@ -42,22 +42,21 @@ interface DockTabBarProps extends TabNavListProps {
 export function DockTabBar(props: DockTabBarProps) {
   const { onDragStart, onDragMove, onDragEnd, TabNavList, isMaximized, ...restProps } = props
 
-  const layout = React.useContext(DockContextType)
+  const { navigateToPanel } = useDockContext()
+  const [ref, setRef] = React.useState<HTMLDivElement | null>(null)
 
-  const ref = React.useRef<HTMLDivElement>()
-  const getRef = (div: HTMLDivElement) => {
-    ref.current = div
-  }
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key.startsWith("Arrow")) {
-      if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
-        layout.navigateToPanel(ref.current, e.key)
+  const onKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key.startsWith("Arrow") && ref) {
+        if (!checkLocalTabMove(e.key, ref) && !isMaximized) {
+          navigateToPanel(ref, e.key)
+        }
+        e.stopPropagation()
+        e.preventDefault()
       }
-      e.stopPropagation()
-      e.preventDefault()
-    }
-  }
+    },
+    [isMaximized, navigateToPanel, ref],
+  )
 
   return (
     <DragDropDiv
@@ -67,7 +66,7 @@ export function DockTabBar(props: DockTabBarProps) {
       role="tablist"
       className="dock-bar"
       onKeyDown={onKeyDown}
-      getRef={getRef}
+      getRef={setRef}
       tabIndex={-1}
     >
       <TabNavList {...restProps} />

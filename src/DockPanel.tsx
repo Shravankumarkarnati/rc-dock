@@ -52,7 +52,7 @@ export const DockPanel = ({ panelData, size }: Props) => {
   const onDragOver = React.useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (e: DragState) => {
-      if (_droppingPanel && _droppingPanel.current.id === panelId) {
+      if (_droppingPanel.current && _droppingPanel.current.id === panelId) {
         return
       }
 

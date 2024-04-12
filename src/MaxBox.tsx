@@ -9,7 +9,7 @@ interface Props {
 export const MaxBox = ({ boxData: { children } }: Props) => {
   // a place holder panel data to be used during hide animation
   let hidePanelData: PanelData
-  let panelData = children[0] as PanelData
+  let panelData = children[0] as PanelData | undefined
 
   if (panelData) {
     hidePanelData = { ...panelData, id: "", tabs: [] }
@@ -19,12 +19,9 @@ export const MaxBox = ({ boxData: { children } }: Props) => {
       </div>
     )
   } else if (hidePanelData) {
-    // use the hiden data only once, dont keep it for too long
-    let _hidePanelData = hidePanelData
-    hidePanelData = null
     return (
       <div className="dock-box dock-mbox dock-mbox-hide">
-        <DockPanel size={100} panelData={_hidePanelData} />
+        <DockPanel size={100} panelData={hidePanelData} />
       </div>
     )
   } else {
