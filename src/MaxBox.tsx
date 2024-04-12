@@ -1,30 +1,22 @@
 import * as React from "react"
-import { BoxData, PanelData } from "./DockData"
+import { BoxData } from "./DockData"
 import { DockPanel } from "./DockPanel"
 
 interface Props {
-  boxData: BoxData
+  boxData?: BoxData
 }
 
-export const MaxBox = ({ boxData: { children } }: Props) => {
-  // a place holder panel data to be used during hide animation
-  let hidePanelData: PanelData
-  let panelData = children[0] as PanelData | undefined
+export const MaxBox = ({ boxData }: Props) => {
+  // there can only be one max box
+  const panelData = boxData?.children?.[0]
 
-  if (panelData) {
-    hidePanelData = { ...panelData, id: "", tabs: [] }
+  if (panelData && "tabs" in panelData) {
     return (
       <div className="dock-box dock-mbox dock-mbox-show">
         <DockPanel size={100} panelData={panelData} />
       </div>
     )
-  } else if (hidePanelData) {
-    return (
-      <div className="dock-box dock-mbox dock-mbox-hide">
-        <DockPanel size={100} panelData={hidePanelData} />
-      </div>
-    )
-  } else {
-    return <div className="dock-box dock-mbox dock-mbox-hide" />
   }
+
+  return <div className="dock-box dock-mbox dock-mbox-hide" />
 }

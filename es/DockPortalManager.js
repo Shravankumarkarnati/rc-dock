@@ -66,5 +66,5 @@ export const RenderDockPortals = () => {
             portals.push(cache.portal);
         }
     }
-    return React.createElement(React.Fragment, null, "portals");
+    return React.createElement(React.Fragment, null, portals);
 };

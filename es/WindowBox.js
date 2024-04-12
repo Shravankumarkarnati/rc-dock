@@ -1,5 +1,6 @@
 import * as React from "react";
 import { WindowPanel } from "./WindowPanel";
+import { BrowserPopupWindow } from "./packages/rc-new-window";
 export const WindowBox = ({ boxData: { children } }) => {
     let childrenRender = [];
     for (let child of children) {
@@ -9,5 +10,4 @@ export const WindowBox = ({ boxData: { children } }) => {
     }
     return React.createElement(React.Fragment, null, childrenRender);
 };
-export const isWindowBoxEnabled = () => typeof window === "object" &&
-    ((window === null || window === void 0 ? void 0 : window.navigator.platform) === "Win32" || (window === null || window === void 0 ? void 0 : window.navigator.platform) === "MacIntel");
+export const isWindowBoxEnabled = () => BrowserPopupWindow.popupSupported;

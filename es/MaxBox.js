@@ -10,11 +10,8 @@ export const MaxBox = ({ boxData: { children } }) => {
             React.createElement(DockPanel, { size: 100, panelData: panelData })));
     }
     else if (hidePanelData) {
-        // use the hiden data only once, dont keep it for too long
-        let _hidePanelData = hidePanelData;
-        hidePanelData = null;
         return (React.createElement("div", { className: "dock-box dock-mbox dock-mbox-hide" },
-            React.createElement(DockPanel, { size: 100, panelData: _hidePanelData })));
+            React.createElement(DockPanel, { size: 100, panelData: hidePanelData })));
     }
     else {
         return React.createElement("div", { className: "dock-box dock-mbox dock-mbox-hide" });

@@ -465,15 +465,15 @@ export const DockLayout = ({
       dropRectStyle.transition = "none"
     }
   }
-  let maximize: React.ReactNode
-  // if (layout.maxbox && layout.maxbox.children.length === 1) {
+
+  let maxBox: React.ReactNode
   if (maximizeTo) {
     if (typeof maximizeTo === "string") {
       maximizeTo = document.getElementById(maximizeTo)
     }
-    maximize = ReactDOM.createPortal(<MaxBox boxData={state.layout.maxbox} />, maximizeTo)
+    maxBox = ReactDOM.createPortal(<MaxBox boxData={state.layout.maxbox} />, maximizeTo)
   } else {
-    maximize = <MaxBox boxData={state.layout.maxbox} />
+    maxBox = <MaxBox boxData={state.layout.maxbox} />
   }
 
   return (
@@ -483,7 +483,7 @@ export const DockLayout = ({
           <DockBox size={1} boxData={state.layout.dockbox} />
           <FloatBox boxData={state.layout.floatbox} />
           <WindowBox boxData={state.layout.windowbox} />
-          {maximize}
+          {maxBox}
           <RenderDockPortals />
         </DockContextProvider>
       </DockPortalManager>

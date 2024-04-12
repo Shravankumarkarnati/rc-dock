@@ -24,31 +24,25 @@ import { WindowBox } from "./WindowBox";
 export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, dockId, dropMode, groups, layout, loadTab, maximizeTo, onLayoutChange, saveTab, style, }) => {
     const [ref, setRef] = React.useState(null);
     const [state, setState] = React.useState(() => {
-        let preparedLayout;
         if (defaultLayout) {
-            preparedLayout = utils.prepareInitData(defaultLayout, groups, loadTab);
+            return {
+                layout: Algorithm.fixLayoutData(Object.assign({}, defaultLayout), groups, loadTab),
+                dropRect: null,
+            };
         }
-        else if (!loadTab) {
+        if (!loadTab || !layout) {
             throw new Error("DockLayout.loadTab and DockLayout.defaultLayout should not both be undefined.");
         }
-        if (layout) {
-            // controlled layout
-            return {
-                layout: utils.loadLayoutData(layout, {
-                    afterPanelLoaded,
-                    defaultLayout,
-                    groups,
-                    loadTab,
-                }),
-                dropRect: null,
-            };
-        }
-        else {
-            return {
-                layout: preparedLayout,
-                dropRect: null,
-            };
-        }
+        // controlled layout
+        return {
+            layout: utils.loadLayoutData(layout, {
+                afterPanelLoaded,
+                defaultLayout,
+                groups,
+                loadTab,
+            }),
+            dropRect: null,
+        };
     });
     const layoutId = React.useId();
     const getDockId = React.useCallback(() => dockId || layoutId, [dockId, layoutId]);
@@ -65,14 +59,13 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
         return defaultGroup;
     }, [groups]);
     const panelToFocus = React.useRef(null);
-    const changeLayout = React.useCallback((layoutData, currentTabId, direction, silent = false) => {
-        let savedLayout;
+    const changeLayout = React.useCallback((layoutData, currentTabId, direction) => {
         if (onLayoutChange) {
-            savedLayout = Serializer.saveLayoutData(layoutData, saveTab, afterPanelSaved);
+            const savedLayout = Serializer.saveLayoutData(layoutData, saveTab, afterPanelSaved);
             layoutData.loadedFrom = savedLayout;
             onLayoutChange(savedLayout, currentTabId, direction);
         }
-        if (!layout && !silent) {
+        if (!layout) {
             // uncontrolled layout when Props.layout is not defined
             setState((prev) => (Object.assign(Object.assign({}, prev), { layout: layoutData })));
         }
@@ -325,11 +318,8 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
     }, [ref, state.dropRect]);
     const getRootElement = React.useCallback(() => ref, [ref]);
     const onSilentChange = React.useCallback((currentTabId = null, direction) => {
-        if (onLayoutChange) {
-            let layout = state.layout;
-            changeLayout(layout, currentTabId, direction, true);
-        }
-    }, [onLayoutChange, state.layout, changeLayout]);
+        changeLayout(state.layout, currentTabId, direction);
+    }, [changeLayout, state.layout]);
     const context = React.useMemo(() => ({
         dockMove,
         find,
@@ -385,13 +375,8 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
         React.createElement("div", { className: "dock-drop-indicator", style: dropRectStyle })));
 };
 const utils = {
-    prepareInitData(data, groups, loadTab) {
-        let layout = Object.assign({}, data);
-        Algorithm.fixLayoutData(layout, groups, loadTab);
-        return layout;
-    },
     loadLayoutData(savedLayout, { defaultLayout, loadTab, afterPanelLoaded, groups, }, width = 0, height = 0) {
-        let layout = Serializer.loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLoaded);
+        let layout = Serializer.loadLayoutData(Object.assign({}, savedLayout), defaultLayout, loadTab, afterPanelLoaded);
         layout = Algorithm.fixFloatPanelPos(layout, width, height);
         layout = Algorithm.fixLayoutData(layout, groups);
         layout.loadedFrom = savedLayout;

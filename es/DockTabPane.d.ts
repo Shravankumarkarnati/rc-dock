@@ -1,7 +1,7 @@
 import { TabsProps } from "rc-tabs";
 import * as React from "react";
 export type Tab = NonNullable<TabsProps["items"][0]>;
-interface DockTabPaneProps extends Tab {
+interface DockTabPaneProps extends Omit<Tab, "label"> {
     cacheId?: string;
     cached: boolean;
 }
