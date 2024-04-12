@@ -353,16 +353,15 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
             dropRectStyle.transition = "none";
         }
     }
-    let maximize;
-    // if (layout.maxbox && layout.maxbox.children.length === 1) {
+    let maxBox;
     if (maximizeTo) {
         if (typeof maximizeTo === "string") {
             maximizeTo = document.getElementById(maximizeTo);
         }
-        maximize = ReactDOM.createPortal(React.createElement(MaxBox, { boxData: state.layout.maxbox }), maximizeTo);
+        maxBox = ReactDOM.createPortal(React.createElement(MaxBox, { boxData: state.layout.maxbox }), maximizeTo);
     }
     else {
-        maximize = React.createElement(MaxBox, { boxData: state.layout.maxbox });
+        maxBox = React.createElement(MaxBox, { boxData: state.layout.maxbox });
     }
     return (React.createElement("div", { ref: setRef, className: "dock-layout", style: style },
         React.createElement(DockPortalManager, null,
@@ -370,7 +369,7 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
                 React.createElement(DockBox, { size: 1, boxData: state.layout.dockbox }),
                 React.createElement(FloatBox, { boxData: state.layout.floatbox }),
                 React.createElement(WindowBox, { boxData: state.layout.windowbox }),
-                maximize,
+                maxBox,
                 React.createElement(RenderDockPortals, null))),
         React.createElement("div", { className: "dock-drop-indicator", style: dropRectStyle })));
 };
