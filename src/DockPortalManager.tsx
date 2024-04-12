@@ -102,5 +102,5 @@ export const RenderDockPortals = () => {
     }
   }
 
-  return <>portals</>
+  return <>{portals}</>
 }
