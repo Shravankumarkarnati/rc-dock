@@ -234,8 +234,8 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
         };
     }, [state.layout, ref, groups, changeLayout]);
     React.useEffect(() => {
-        const unsubcribe = addDragStateListener(onDragStateChange);
-        return unsubcribe;
+        const unSubscribe = addDragStateListener(onDragStateChange);
+        return unSubscribe;
     }, [onDragStateChange]);
     React.useEffect(() => {
         var _a;

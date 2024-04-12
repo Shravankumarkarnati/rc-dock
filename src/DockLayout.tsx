@@ -316,9 +316,9 @@ export const DockLayout = ({
   }, [state.layout, ref, groups, changeLayout])
 
   React.useEffect(() => {
-    const unsubcribe = addDragStateListener(onDragStateChange)
+    const unSubscribe = addDragStateListener(onDragStateChange)
 
-    return unsubcribe
+    return unSubscribe
   }, [onDragStateChange])
 
   React.useEffect(() => {
