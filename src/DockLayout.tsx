@@ -19,7 +19,7 @@ import {
   TabData,
 } from "./DockData"
 import { DockPortalManager, RenderDockPortals } from "./DockPortalManager"
-import * as DragManager from "./dragdrop/DragManager"
+import { addDragStateListener } from "./dragdrop/DragManager"
 import { FloatBox } from "./FloatBox"
 import { LayoutProps } from "./LayoutProps"
 import { MaxBox } from "./MaxBox"
@@ -316,11 +316,9 @@ export const DockLayout = ({
   }, [state.layout, ref, groups, changeLayout])
 
   React.useEffect(() => {
-    DragManager.addDragStateListener(onDragStateChange)
+    const unsubcribe = addDragStateListener(onDragStateChange)
 
-    return () => {
-      DragManager.removeDragStateListener(onDragStateChange)
-    }
+    return unsubcribe
   }, [onDragStateChange])
 
   React.useEffect(() => {

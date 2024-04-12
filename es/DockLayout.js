@@ -16,7 +16,7 @@ import * as Algorithm from "./Algorithm";
 import { DockBox } from "./DockBox";
 import { defaultGroup, DockContextProvider, placeHolderGroup, placeHolderStyle, } from "./DockData";
 import { DockPortalManager, RenderDockPortals } from "./DockPortalManager";
-import * as DragManager from "./dragdrop/DragManager";
+import { addDragStateListener } from "./dragdrop/DragManager";
 import { FloatBox } from "./FloatBox";
 import { MaxBox } from "./MaxBox";
 import * as Serializer from "./Serializer";
@@ -234,10 +234,8 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
         };
     }, [state.layout, ref, groups, changeLayout]);
     React.useEffect(() => {
-        DragManager.addDragStateListener(onDragStateChange);
-        return () => {
-            DragManager.removeDragStateListener(onDragStateChange);
-        };
+        const unsubcribe = addDragStateListener(onDragStateChange);
+        return unsubcribe;
     }, [onDragStateChange]);
     React.useEffect(() => {
         var _a;

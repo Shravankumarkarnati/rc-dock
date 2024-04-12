@@ -13,20 +13,7 @@ export class DragState {
         this.component = component;
         this._init = init;
         if (event) {
-            if (event.type.startsWith("touch")) {
-                let touch;
-                if (event.type === "touchend") {
-                    touch = event.changedTouches[0];
-                }
-                else {
-                    touch = event.touches[0];
-                }
-                this.pageX = touch.pageX;
-                this.pageY = touch.pageY;
-                this.clientX = touch.clientX;
-                this.clientY = touch.clientY;
-            }
-            else if ("pageX" in event) {
+            if ("pageX" in event) {
                 this.pageX = event.pageX;
                 this.pageY = event.pageY;
                 this.clientX = event.clientX;
@@ -235,18 +222,7 @@ export function destroyDraggingElement(e) {
 let _dragStateListener = new Set();
 export function addDragStateListener(callback) {
     _dragStateListener.add(callback);
-}
-export function removeDragStateListener(callback) {
-    _dragStateListener.delete(callback);
-}
-// work around for drag scroll issue on IOS
-if (typeof window !== "undefined" &&
-    window.navigator &&
-    window.navigator.platform &&
-    /iP(ad|hone|od)/.test(window.navigator.platform)) {
-    document.addEventListener("touchmove", (e) => {
-        if (e.touches.length === 1 && document.body.classList.contains("dock-dragging")) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+    return () => {
+        _dragStateListener.delete(callback);
+    };
 }

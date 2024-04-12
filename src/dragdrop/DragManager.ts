@@ -1,9 +1,9 @@
 import classNames from "classnames"
 import { groupClassNames } from "../Utils"
 
-export type DragType = "left" | "right" | "touch"
+export type DragType = "left" | "right"
 
-interface DragDropComponent {
+export interface DragDropComponent {
   element: HTMLElement
   ownerDocument: Document
   dragType: DragType
@@ -15,7 +15,7 @@ interface DragDropComponent {
 
 export class DragState {
   _init: boolean
-  event: MouseEvent | TouchEvent
+  event: MouseEvent
   component: DragDropComponent
   pageX = 0
   pageY = 0
@@ -25,24 +25,12 @@ export class DragState {
   dy = 0
   dropped: any = false
 
-  constructor(event: MouseEvent | TouchEvent, component: DragDropComponent, init = false) {
+  constructor(event: MouseEvent, component: DragDropComponent, init = false) {
     this.event = event
     this.component = component
     this._init = init
     if (event) {
-      if (event.type.startsWith("touch")) {
-        let touch: Touch
-        if (event.type === "touchend") {
-          touch = (event as TouchEvent).changedTouches[0]
-        } else {
-          touch = (event as TouchEvent).touches[0]
-        }
-
-        this.pageX = touch.pageX
-        this.pageY = touch.pageY
-        this.clientX = touch.clientX
-        this.clientY = touch.clientY
-      } else if ("pageX" in event) {
+      if ("pageX" in event) {
         this.pageX = event.pageX
         this.pageY = event.pageY
         this.clientX = event.clientX
@@ -171,7 +159,7 @@ function setDroppingHandler(handlers: DragHandlers, state: DragState) {
   _droppingHandlers = handlers
 }
 
-interface DragHandlers {
+export interface DragHandlers {
   onDragOverT?: DragHandler
   onDragLeaveT?: DragHandler
   onDropT?: DropHandler
@@ -301,26 +289,8 @@ let _dragStateListener: Set<(scope: any) => void> = new Set()
 
 export function addDragStateListener(callback: (scope: any) => void) {
   _dragStateListener.add(callback)
-}
 
-export function removeDragStateListener(callback: (scope: any) => void) {
-  _dragStateListener.delete(callback)
-}
-
-// work around for drag scroll issue on IOS
-if (
-  typeof window !== "undefined" &&
-  window.navigator &&
-  window.navigator.platform &&
-  /iP(ad|hone|od)/.test(window.navigator.platform)
-) {
-  document.addEventListener(
-    "touchmove",
-    (e: TouchEvent) => {
-      if (e.touches.length === 1 && document.body.classList.contains("dock-dragging")) {
-        e.preventDefault()
-      }
-    },
-    { passive: false },
-  )
+  return () => {
+    _dragStateListener.delete(callback)
+  }
 }

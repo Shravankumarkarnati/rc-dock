@@ -35,7 +35,7 @@ module.exports = {
     "react/prop-types": "off",
     "react-hooks/exhaustive-deps": ["warn"],
 
-    "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "jsx" }],
+    "@typescript-eslint/no-unused-vars": ["warn"],
 
     "no-async-promise-executor": ["error"],
     "no-console": ["warn", { allow: ["error", "info", "warn"] }],

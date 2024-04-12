@@ -1,5 +1,5 @@
-export type DragType = "left" | "right" | "touch";
-interface DragDropComponent {
+export type DragType = "left" | "right";
+export interface DragDropComponent {
     element: HTMLElement;
     ownerDocument: Document;
     dragType: DragType;
@@ -10,7 +10,7 @@ interface DragDropComponent {
 }
 export declare class DragState {
     _init: boolean;
-    event: MouseEvent | TouchEvent;
+    event: MouseEvent;
     component: DragDropComponent;
     pageX: number;
     pageY: number;
@@ -19,7 +19,7 @@ export declare class DragState {
     dx: number;
     dy: number;
     dropped: any;
-    constructor(event: MouseEvent | TouchEvent, component: DragDropComponent, init?: boolean);
+    constructor(event: MouseEvent, component: DragDropComponent, init?: boolean);
     moved(): boolean;
     /**
      * @param refElement, the element being moved
@@ -40,7 +40,7 @@ export declare class DragState {
 }
 export type DragHandler = (state: DragState) => void;
 export type DropHandler = (state: DragState) => any;
-interface DragHandlers {
+export interface DragHandlers {
     onDragOverT?: DragHandler;
     onDragLeaveT?: DragHandler;
     onDropT?: DropHandler;
@@ -49,6 +49,4 @@ export declare function isDragging(): boolean;
 export declare function addHandlers(element: HTMLElement, handlers: DragHandlers): void;
 export declare function removeHandlers(element: HTMLElement): void;
 export declare function destroyDraggingElement(e: DragState): void;
-export declare function addDragStateListener(callback: (scope: any) => void): void;
-export declare function removeDragStateListener(callback: (scope: any) => void): void;
-export {};
+export declare function addDragStateListener(callback: (scope: any) => void): () => void;
