@@ -3,12 +3,13 @@ import { BoxData } from "./DockData"
 import { DockPanel } from "./DockPanel"
 
 interface Props {
-  boxData: BoxData
+  boxData?: BoxData
 }
 
-export const FloatBox = ({ boxData: { children } }: Props) => {
+export const FloatBox = ({ boxData }: Props) => {
   let childrenRender: React.ReactNode[] = []
-  for (let child of children) {
+
+  for (let child of boxData?.children ?? []) {
     if ("tabs" in child) {
       childrenRender.push(<DockPanel size={child.size} panelData={child} key={child.id} />)
     }
