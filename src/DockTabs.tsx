@@ -25,32 +25,11 @@ function findParentPanel(element: HTMLElement) {
   return null
 }
 
-function isPopupDiv(r: HTMLDivElement): boolean {
-  return (
-    r == null ||
-    r.parentElement?.tagName === "LI" ||
-    r.parentElement?.parentElement?.tagName === "LI"
-  )
-}
-
 const TabLabel = ({ data }: { data: TabData }) => {
-  const ref = React.useRef<null | HTMLDivElement>(null)
-  const setRef = React.useCallback((r: HTMLDivElement) => {
-    ref.current = isPopupDiv(r) ? null : r
-  }, [])
-
-  const hitAreaRef = React.useRef<null | HTMLDivElement>(null)
-  const setHitAreaRef = React.useCallback((r: HTMLDivElement) => {
-    hitAreaRef.current = isPopupDiv(r) ? null : r
-  }, [])
+  const [ref, setRef] = React.useState<null | HTMLDivElement>(null)
+  const [hitAreaRef, setHitAreaRef] = React.useState<null | HTMLDivElement>(null)
 
   const { dockMove, getGroup, getDockId, setDropRect } = useDockContext()
-
-  const getDropDirection = React.useCallback((e: DragManager.DragState): DropDirection => {
-    let rect = hitAreaRef.current?.getBoundingClientRect()
-    let midx = rect.left + rect.width * 0.5
-    return e.clientX > midx ? "after-tab" : "before-tab"
-  }, [])
 
   const onCloseClick = React.useCallback(
     (e: React.MouseEvent) => {
@@ -60,6 +39,15 @@ const TabLabel = ({ data }: { data: TabData }) => {
     [data, dockMove],
   )
 
+  const getDropDirection = React.useCallback(
+    (e: DragManager.DragState): DropDirection => {
+      let rect = hitAreaRef?.getBoundingClientRect()
+      let midx = rect.left + rect.width * 0.5
+      return e.clientX > midx ? "after-tab" : "before-tab"
+    },
+    [hitAreaRef],
+  )
+
   const onDragStart = React.useCallback(
     (e: DragManager.DragState) => {
       let panel = data.parent
@@ -67,28 +55,30 @@ const TabLabel = ({ data }: { data: TabData }) => {
         // when it's the only tab in a float panel, skip this drag, let parent tab bar handle it
         return
       }
-      let panelElement = findParentPanel(ref.current)
+      let panelElement = findParentPanel(ref)
       let tabGroup = getGroup(data.group)
-      let [panelWidth, panelHeight] = getFloatPanelSize(panelElement, tabGroup)
 
       e.setData(
         {
           tab: data,
-          panelSize: [panelWidth, panelHeight],
+          panelSize: getFloatPanelSize(panelElement, tabGroup),
           tabGroup: data.group,
         },
         getDockId(),
       )
-      e.startDrag(ref.current.parentElement, ref.current.parentElement)
+      e.startDrag(ref.parentElement, ref.parentElement)
     },
-    [data, getDockId, getGroup],
+    [data, getDockId, getGroup, ref],
   )
 
   const onDragOver = React.useCallback(
     (e: DragManager.DragState) => {
-      let dockId = getDockId()
-      let tab: TabData = DragManager.DragState.getData("tab", dockId)
+      const dockId = getDockId()
+      const tab: TabData = DragManager.DragState.getData("tab", dockId)
+      const direction = getDropDirection(e)
+
       let panel: PanelData = DragManager.DragState.getData("panel", dockId)
+
       let group: string
       if (tab) {
         panel = tab.parent
@@ -104,35 +94,32 @@ const TabLabel = ({ data }: { data: TabData }) => {
         }
         group = panel.group
       }
-      let tabGroup = getGroup(group)
+      const tabGroup = getGroup(group)
+
       if (group !== data.group) {
         e.reject()
       } else if (tabGroup?.floatable === "singleTab" && data.parent?.parent?.mode === "float") {
         e.reject()
       } else if (tab && tab !== data) {
-        let direction = getDropDirection(e)
-        setDropRect(hitAreaRef.current, direction, this)
+        setDropRect(hitAreaRef, direction, this)
         e.accept("")
       } else if (panel && panel !== data.parent) {
-        let direction = getDropDirection(e)
-        setDropRect(hitAreaRef.current, direction, this)
+        setDropRect(hitAreaRef, direction, this)
         e.accept("")
       }
     },
-    [data, getDockId, getDropDirection, getGroup, setDropRect],
+    [data, getDockId, getDropDirection, getGroup, hitAreaRef, setDropRect],
   )
 
-  const onDragLeave = React.useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (e: DragManager.DragState) => {
-      setDropRect(null, "remove", this)
-    },
-    [setDropRect],
-  )
+  const onDragLeave = React.useCallback(() => {
+    setDropRect(null, "remove", this)
+  }, [setDropRect])
 
   const onDrop = React.useCallback(
     (e: DragManager.DragState) => {
-      let dockId = getDockId()
+      const dockId = getDockId()
+      const direction = getDropDirection(e)
+
       let panel: PanelData
       let tab: TabData = DragManager.DragState.getData("tab", dockId)
       if (tab) {
@@ -140,11 +127,10 @@ const TabLabel = ({ data }: { data: TabData }) => {
       } else {
         panel = DragManager.DragState.getData("panel", dockId)
       }
+
       if (tab && tab !== data) {
-        let direction = getDropDirection(e)
         dockMove(tab, data, direction)
       } else if (panel && panel !== data.parent) {
-        let direction = getDropDirection(e)
         dockMove(panel, data, direction)
       }
     },

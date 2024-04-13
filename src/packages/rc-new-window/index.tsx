@@ -48,6 +48,7 @@ const NewWindow = ({
 
   useEffect(() => {
     const container = document.createElement("div")
+    const window = globalThis.window
 
     let features: Feature = { width, height }
 
@@ -67,14 +68,12 @@ const NewWindow = ({
         features.height += topBorder
       }
     } else {
-      features.left =
-        globalThis.window.top.outerWidth / 2 + globalThis.window.top.screenX - width / 2
-      features.top =
-        globalThis.window.top.outerHeight / 2 + globalThis.window.top.screenY - height / 2
+      features.left = window.top.outerWidth / 2 + window.top.screenX - width / 2
+      features.top = window.top.outerHeight / 2 + window.top.screenY - height / 2
     }
 
     // Open a new window.
-    let newWindow = globalThis.window.open(url, name, toWindowFeatures(features))
+    let newWindow = window.open(url, name, toWindowFeatures(features))
 
     // Check if the new window was successfully opened.
     if (newWindow) {
@@ -113,14 +112,14 @@ const NewWindow = ({
       }
     }
 
-    globalThis.window.addEventListener("beforeunload", onUnload)
+    window.addEventListener("beforeunload", onUnload)
     newWindow.addEventListener("beforeunload", onUnload)
     newWindow.addEventListener("resize", onNewWindowResize)
     setPortalContainer(container)
 
     return () => {
       onNewWindowResize.cancel()
-      globalThis.window.removeEventListener("beforeunload", onUnload)
+      window.removeEventListener("beforeunload", onUnload)
       newWindow.removeEventListener("beforeunload", onUnload)
       newWindow.removeEventListener("resize", onNewWindowResize)
       setPortalContainer(null)
