@@ -1,147 +1,236 @@
-// import * as React from "react"
-// import * as DragManager from "./DragManager"
+import * as React from "react"
+import * as DragManager from "./DragManager"
 
-// export type AbstractPointerEvent = MouseEvent
+export type AbstractPointerEvent = MouseEvent
 
-// interface DragDropDivProps extends React.HTMLAttributes<HTMLDivElement> {
-//   getRef?: (ref: HTMLDivElement) => void
-//   onDragStartT?: DragManager.DragHandler
-//   onDragMoveT?: DragManager.DragHandler
-//   onDragEndT?: DragManager.DragHandler
-//   onDragOverT?: DragManager.DragHandler
-//   onDragLeaveT?: DragManager.DragHandler
-//   /**
-//    * Anything returned by onDropT will be stored in DragState.dropped
-//    * return false to indicate the drop is canceled
-//    */
-//   onDropT?: DragManager.DropHandler
-// }
+interface DragDropDivProps extends React.HTMLAttributes<HTMLDivElement> {
+  getRef?: (ref: HTMLDivElement) => void
+  onDragStartT?: DragManager.DragHandler
+  onDragMoveT?: DragManager.DragHandler
+  onDragEndT?: DragManager.DragHandler
+  onDragOverT?: DragManager.DragHandler
+  onDragLeaveT?: DragManager.DragHandler
+  /**
+   * Anything returned by onDropT will be stored in DragState.dropped
+   * return false to indicate the drop is canceled
+   */
+  onDropT?: DragManager.DropHandler
+}
 
-// export const DragDropDiv = (props: DragDropDivProps) => {
-//   const {
-//     getRef,
-//     onDragStartT,
-//     onDragMoveT,
-//     onDragEndT,
-//     onDragOverT,
-//     onDragLeaveT,
-//     onDropT,
-//     children,
-//     className,
-//     ...others
-//   } = props
+export class DragDropDiv extends React.PureComponent<DragDropDivProps, any> {
+  element: HTMLElement
+  ownerDocument: Document
+  _getRef = (r: HTMLDivElement) => {
+    if (r === this.element) {
+      return
+    }
+    let { getRef, onDragOverT } = this.props
+    if (this.element && onDragOverT) {
+      DragManager.removeHandlers(this.element)
+    }
+    this.element = r
+    if (r) {
+      this.ownerDocument = r.ownerDocument
+    }
+    if (getRef) {
+      getRef(r)
+    }
+    if (r && onDragOverT) {
+      DragManager.addHandlers(r, this.props)
+    }
+  }
 
-//   const [element, setElement] = React.useState<HTMLDivElement | null>(null)
-//   const [ownerDocument, setOwnerDocument] = React.useState<Document | null>(null)
+  dragType: DragManager.DragType = null
+  baseX: number
+  baseY: number
+  scaleX: number
+  scaleY: number
+  waitingMove = false
+  listening = false
 
-//   const [event, setEvent] = React.useState<null | MouseEvent>(null)
+  baseX2: number
+  baseY2: number
+  baseDis: number
+  baseAng: number
 
-//   const dragComponent = React.useRef<DragManager.DragDropComponent | null>(null)
+  onPointerDown = (e: React.MouseEvent) => {
+    let nativeTarget = e.nativeEvent.target as HTMLElement
+    if (
+      nativeTarget instanceof HTMLInputElement ||
+      nativeTarget instanceof HTMLTextAreaElement ||
+      nativeTarget.classList.contains("drag-ignore")
+    ) {
+      // ignore drag from input element
+      return
+    }
 
-//   const listening = React.useRef(false)
-//   const waitingMove = React.useRef(false)
+    let { onDragStartT } = this.props
+    let event = e.nativeEvent
+    this.cancel()
+    if (onDragStartT) {
+      this.onDragStart(event)
+    }
+  }
 
-//   const ref = React.useCallback(
-//     (_ref: HTMLDivElement) => {
-//       setOwnerDocument(_ref.ownerDocument)
-//       getRef?.(_ref)
-//       setElement(_ref)
-//     },
-//     [getRef],
-//   )
+  onDragStart(event: AbstractPointerEvent) {
+    if (DragManager.isDragging()) {
+      // same pointer event shouldn't trigger 2 drag start
+      return
+    }
+    let state = new DragManager.DragState(event, this, true)
+    this.baseX = state.pageX
+    this.baseY = state.pageY
 
-//   React.useEffect(() => {
-//     if (element) {
-//       if (onDragOverT) {
-//         DragManager.addHandlers(element, { onDragLeaveT, onDragOverT, onDropT })
-//       } else {
-//         DragManager.removeHandlers(element)
-//       }
-//     }
+    let baseElement = this.element.parentElement
+    let rect = baseElement.getBoundingClientRect()
+    this.scaleX = baseElement.offsetWidth / Math.round(rect.width)
+    this.scaleY = baseElement.offsetHeight / Math.round(rect.height)
+    this.addDragListeners(event)
+  }
 
-//     return () => {
-//       if (element) {
-//         DragManager.removeHandlers(element)
-//       }
-//     }
-//   }, [element, onDragLeaveT, onDragOverT, onDropT])
+  addDragListeners(event: AbstractPointerEvent) {
+    this.ownerDocument.addEventListener("mousemove", this.onMouseMove)
+    this.ownerDocument.addEventListener("mouseup", this.onDragEnd)
+    if ((event as MouseEvent).button === 2) {
+      this.dragType = "right"
+    } else {
+      this.dragType = "left"
+    }
+    this.waitingMove = true
+    this.listening = true
+  }
 
-//   const onPointerDown = React.useCallback((e: React.MouseEvent) => {
-//     let nativeTarget = e.nativeEvent.target as HTMLElement
-//     if (
-//       nativeTarget instanceof HTMLInputElement ||
-//       nativeTarget instanceof HTMLTextAreaElement ||
-//       nativeTarget.classList.contains("drag-ignore")
-//     ) {
-//       // ignore drag from input element
-//       return
-//     }
+  // return true for a valid move
+  checkFirstMove(e: AbstractPointerEvent) {
+    let state = new DragManager.DragState(e, this, true)
+    if (!state.moved()) {
+      // not a move
+      return false
+    }
+    return this.executeFirstMove(state)
+  }
 
-//     setEvent(e.nativeEvent)
-//   }, [])
+  executeFirstMove(state: DragManager.DragState): boolean {
+    let { onDragStartT } = this.props
 
-//   React.useEffect(() => {
-//     if (DragManager.isDragging()) {
-//       // same pointer event shouldn't trigger 2 drag start
-//       return
-//     }
+    this.waitingMove = false
+    onDragStartT(state)
+    if (!DragManager.isDragging()) {
+      this.onDragEnd()
+      return false
+    }
+    state._onMove()
+    this.ownerDocument.addEventListener("keydown", this.onKeyDown)
+    return true
+  }
 
-//     if (!element || !ownerDocument) {
-//       return
-//     }
+  onMouseMove = (e: MouseEvent) => {
+    let { onDragMoveT } = this.props
+    if (this.waitingMove) {
+      if (DragManager.isDragging()) {
+        this.onDragEnd()
+        return
+      }
+      if (!this.checkFirstMove(e)) {
+        return
+      }
+    } else {
+      let state = new DragManager.DragState(e, this)
+      state._onMove()
+      if (onDragMoveT) {
+        onDragMoveT(state)
+      }
+    }
+    e.preventDefault()
+  }
 
-//     const onMouseMove = (e: MouseEvent) => {
-//       console.log("mousemove", e)
-//     }
-//     const onMouseUp = (e: MouseEvent) => {
-//       console.log("mouseup", e)
-//     }
+  onDragEnd = (e?: MouseEvent) => {
+    let { onDragEndT } = this.props
+    let state = new DragManager.DragState(e, this)
 
-//     let state = new DragManager.DragState(event, this, true)
-//     let baseX = state.pageX
-//     let baseY = state.pageY
+    this.removeListeners()
 
-//     let baseElement = element.parentElement
-//     let rect = baseElement.getBoundingClientRect()
-//     let scaleX = baseElement.offsetWidth / Math.round(rect.width)
-//     let scaleY = baseElement.offsetHeight / Math.round(rect.height)
+    if (!this.waitingMove) {
+      // e=null means drag is canceled
+      state._onDragEnd(e == null)
+      if (onDragEndT) {
+        onDragEndT(state)
+      }
+    }
 
-//     let dragType: DragManager.DragType
+    this.cleanupDrag(state)
+  }
 
-//     ownerDocument.addEventListener("mousemove", onMouseMove)
-//     ownerDocument.addEventListener("mouseup", onMouseUp)
-//     if ((event as MouseEvent).button === 2) {
-//       dragType = "right"
-//     } else {
-//       dragType = "left"
-//     }
-//     waitingMove.current = true
-//     listening.current = true
+  onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      this.cancel()
+    }
+  }
 
-//     return () => {
-//       ownerDocument?.removeEventListener("mousemove", onMouseMove)
-//       ownerDocument?.removeEventListener("mouseup", onMouseUp)
-//     }
-//   }, [event, element, ownerDocument])
+  cancel() {
+    if (this.listening) {
+      this.onDragEnd()
+    }
+  }
 
-//   let onMouseDown
-//   let _className = className
+  removeListeners() {
+    if (this.listening) {
+      this.ownerDocument.removeEventListener("mousemove", this.onMouseMove)
+      this.ownerDocument.removeEventListener("mouseup", this.onDragEnd)
+    }
 
-//   if (onDragStartT) {
-//     onMouseDown = onPointerDown
+    this.ownerDocument.removeEventListener("keydown", this.onKeyDown)
+    this.listening = false
+  }
 
-//     if (_className) {
-//       _className = `${_className} drag-initiator`
-//     } else {
-//       _className = "drag-initiator"
-//     }
-//   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  cleanupDrag(state: DragManager.DragState) {
+    this.dragType = null
+    this.waitingMove = false
+  }
 
-//   return (
-//     <div ref={ref} className={_className} {...others} onMouseDown={onMouseDown}>
-//       {children}
-//     </div>
-//   )
-// }
+  render(): React.ReactNode {
+    let { children, className, onDragStartT, ...others } = this.props
+    let onMouseDown = this.onPointerDown
+    if (!onDragStartT) {
+      onMouseDown = null
+    }
+    if (onDragStartT) {
+      if (className) {
+        className = `${className} drag-initiator`
+      } else {
+        className = "drag-initiator"
+      }
+    }
 
-export * from "./DragDropDiv.main"
+    return (
+      <div ref={this._getRef} className={className} {...others} onMouseDown={onMouseDown}>
+        {children}
+      </div>
+    )
+  }
+
+  componentDidUpdate(prevProps: DragDropDivProps) {
+    let { onDragOverT, onDragEndT, onDragLeaveT } = this.props
+    if (
+      this.element &&
+      (prevProps.onDragOverT !== onDragOverT ||
+        prevProps.onDragLeaveT !== onDragLeaveT ||
+        prevProps.onDragEndT !== onDragEndT)
+    ) {
+      if (onDragOverT) {
+        DragManager.addHandlers(this.element, this.props)
+      } else {
+        DragManager.removeHandlers(this.element)
+      }
+    }
+  }
+
+  componentWillUnmount(): void {
+    let { onDragOverT } = this.props
+    if (this.element && onDragOverT) {
+      DragManager.removeHandlers(this.element)
+    }
+    this.cancel()
+  }
+}
