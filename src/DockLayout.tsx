@@ -123,17 +123,6 @@ export const DockLayout = ({
     [layout, onLayoutChange, saveTab, afterPanelSaved],
   )
 
-  const onDragStateChange = React.useCallback(
-    (draggingScope: any) => {
-      if (draggingScope == null) {
-        if (state.dropRect) {
-          setState((prev) => ({ ...prev, dropRect: null }))
-        }
-      }
-    },
-    [state.dropRect],
-  )
-
   const dockMove = React.useCallback(
     (
       source: TabData | PanelData,
@@ -195,9 +184,8 @@ export const DockLayout = ({
           "tabs" in source ? (source as PanelData).activeId : (source as TabData).id
         changeLayout(layout, currentTabId, direction)
       }
-      onDragStateChange(false)
     },
-    [changeLayout, find, groups, onDragStateChange, ref, state.dropRect, state.layout],
+    [changeLayout, find, groups, ref, state.dropRect, state.layout],
   )
 
   const getLayoutSize = React.useCallback((): LayoutSize => {
@@ -316,10 +304,16 @@ export const DockLayout = ({
   }, [state.layout, ref, groups, changeLayout])
 
   React.useEffect(() => {
+    const onDragStateChange = (draggingScope: any) => {
+      if (draggingScope == null) {
+        setState((prev) => ({ ...prev, dropRect: null }))
+      }
+    }
+
     const unSubscribe = addDragStateListener(onDragStateChange)
 
     return unSubscribe
-  }, [onDragStateChange])
+  }, [])
 
   React.useEffect(() => {
     if (panelToFocus.current) {
