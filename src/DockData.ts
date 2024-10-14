@@ -195,7 +195,7 @@ export interface TabData extends TabBase, DockDataBase {
   /**
    * title that's shown in the tab of the panel header
    */
-  title: React.ReactChild | ((props: {onClose: (e: React.MouseEvent<Element, MouseEvent>) => void}) => React.ReactElement);
+  title: React.ReactChild | ((props: {onClose: (e: React.MouseEvent<Element, MouseEvent>) => void, id: string}) => React.ReactElement);
   content: React.ReactElement | ((tab: TabData) => React.ReactElement);
   closable?: boolean;
 

@@ -160,7 +160,7 @@ export class TabCache {
     let tabContent;
     if (typeof title === "function") {
       const TitleNode = title
-      tabContent = <TitleNode onClose={(e) => this.onCloseClick(e)} />;
+      tabContent = <TitleNode onClose={this.onCloseClick} id={id} />;
     } else {
       tabContent = (
         <>

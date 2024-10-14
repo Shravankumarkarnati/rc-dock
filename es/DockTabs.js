@@ -148,7 +148,7 @@ export class TabCache {
         let tabContent;
         if (typeof title === "function") {
             const TitleNode = title;
-            tabContent = React.createElement(TitleNode, { onClose: (e) => this.onCloseClick(e) });
+            tabContent = React.createElement(TitleNode, { onClose: this.onCloseClick, id: id });
         }
         else {
             tabContent = (React.createElement(React.Fragment, null,
