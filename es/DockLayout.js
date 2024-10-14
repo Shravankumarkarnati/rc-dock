@@ -15,7 +15,7 @@ import * as ReactDOM from "react-dom";
 import * as Algorithm from "./Algorithm";
 import { DockBox } from "./DockBox";
 import { defaultGroup, DockContextProvider, placeHolderGroup, placeHolderStyle, } from "./DockData";
-import { DockPortalManager, RenderDockPortals } from "./DockPortalManager";
+import { DockPortalManager } from "./DockPortalManager";
 import { addDragStateListener } from "./dragdrop/DragManager";
 import { FloatBox } from "./FloatBox";
 import { MaxBox } from "./MaxBox";
@@ -367,8 +367,7 @@ export const DockLayout = ({ afterPanelLoaded, afterPanelSaved, defaultLayout, d
                 React.createElement(DockBox, { size: 1, boxData: state.layout.dockbox }),
                 React.createElement(FloatBox, { boxData: state.layout.floatbox }),
                 React.createElement(WindowBox, { boxData: state.layout.windowbox }),
-                maxBox,
-                React.createElement(RenderDockPortals, null))),
+                maxBox)),
         React.createElement("div", { className: "dock-drop-indicator", style: dropRectStyle })));
 };
 const utils = {

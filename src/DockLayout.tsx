@@ -18,7 +18,7 @@ import {
   placeHolderStyle,
   TabData,
 } from "./DockData"
-import { DockPortalManager, RenderDockPortals } from "./DockPortalManager"
+import { DockPortalManager } from "./DockPortalManager"
 import { addDragStateListener } from "./dragdrop/DragManager"
 import { FloatBox } from "./FloatBox"
 import { LayoutProps } from "./LayoutProps"
@@ -482,7 +482,6 @@ export const DockLayout = ({
           <FloatBox boxData={state.layout.floatbox} />
           <WindowBox boxData={state.layout.windowbox} />
           {maxBox}
-          <RenderDockPortals />
         </DockContextProvider>
       </DockPortalManager>
       <div className="dock-drop-indicator" style={dropRectStyle} />

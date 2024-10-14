@@ -2,7 +2,6 @@ import classNames from "classnames"
 import { TabsProps } from "rc-tabs"
 import * as React from "react"
 import { usePortalManager } from "./DockPortalManager"
-import { TabPaneCache } from "./DockData"
 
 export type Tab = NonNullable<TabsProps["items"][0]>
 
@@ -25,34 +24,37 @@ const DockTabPane = ({
   tabKey,
   children,
 }: DockTabPaneProps) => {
-  const { removeTabCache, getTabCache, updateTabCache } = usePortalManager()
+  const { removeTabCache, updateTabCache } = usePortalManager()
+  const ref = React.useRef<HTMLElement | null>(null)
 
-  const [ref, setRef] = React.useState<null | HTMLElement>(null)
+  const setRef = React.useCallback(
+    (_ref: HTMLElement | null) => {
+      if (!_ref) return
 
-  const cache = React.useRef<null | TabPaneCache>(null)
+      const { div } = updateTabCache(id, children, _ref)
+
+      if (!_ref.contains(div)) {
+        _ref.append(div)
+      }
+
+      ref.current = _ref
+    },
+    [children, id, updateTabCache],
+  )
 
   React.useEffect(() => {
-    if (cache.current) {
-      if (!cached || cacheId !== cache.current.id) {
-        removeTabCache(cache.current.id, ref)
-        cache.current = null
-      }
+    if (ref.current) {
+      console.log("update", id)
+      updateTabCache(id, children, ref.current)
     }
-    if (cached && ref) {
-      cache.current = getTabCache(cacheId, ref)
+  }, [children, id, updateTabCache])
 
-      if (!ref.contains(cache.current.div)) {
-        ref.appendChild(cache.current.div)
-      }
-      updateTabCache(cache.current.id, children)
-    }
-
+  React.useEffect(() => {
     return () => {
-      if (cache.current) {
-        removeTabCache(cache.current.id, ref)
-      }
+      console.log("remove")
+      removeTabCache(id, ref.current)
     }
-  }, [cached, children, cacheId, removeTabCache, getTabCache, updateTabCache, ref])
+  }, [])
 
   let visited = false
   if (active) {

@@ -1,12 +1,11 @@
-import React, { useCallback, useMemo, useRef, useState } from "react"
+import React, { useCallback, useMemo, useRef } from "react"
 import { TabPaneCache } from "./DockData"
 import { createPortal } from "react-dom"
+import { useForceUpdate } from "./UseForceUpdate"
 
 type PortalManager = {
-  caches: Map<string, TabPaneCache>
-  getTabCache(id: string, owner: any): TabPaneCache
+  updateTabCache(id: string, children: React.ReactNode, owner: any): TabPaneCache
   removeTabCache(id: string, owner: any): void
-  updateTabCache(id: string, children: React.ReactNode): void
 }
 
 /** @ignore */
@@ -19,47 +18,23 @@ type Props = {
 }
 
 export const DockPortalManager = ({ children }: Props) => {
-  const [caches, setCaches] = useState(new Map<string, TabPaneCache>())
+  const caches = useRef(new Map<string, TabPaneCache>())
   const pendingDestroy = useRef<unknown | null>()
+
+  const forceUpdate = useForceUpdate()
 
   const destroyRemovedPane = useCallback(() => {
     pendingDestroy.current = null
-    setCaches((prev) => {
-      const next = new Map(prev)
-      for (let [id, cache] of next) {
-        if (cache.owner == null) {
-          next.delete(id)
-        }
+    for (let [id, cache] of caches.current) {
+      if (cache.owner == null) {
+        caches.current.delete(id)
       }
-      return prev
-    })
+    }
   }, [])
-
-  const getTabCache = useCallback(
-    (id: string, owner: any): TabPaneCache => {
-      let cache = caches.get(id)
-
-      if (!cache) {
-        let div = document.createElement("div")
-        div.className = "dock-pane-cache"
-        cache = { div, id, owner }
-        setCaches((prev) => {
-          const next = new Map(prev)
-          next.set(id, cache)
-          return next
-        })
-      } else {
-        cache.owner = owner
-      }
-
-      return cache
-    },
-    [caches],
-  )
 
   const removeTabCache = useCallback(
     (id: string, owner: any): void => {
-      let cache = caches.get(id)
+      let cache = caches.current.get(id)
       if (cache && cache.owner === owner) {
         cache.owner = null
         if (!pendingDestroy.current) {
@@ -67,40 +42,48 @@ export const DockPortalManager = ({ children }: Props) => {
           pendingDestroy.current = setTimeout(destroyRemovedPane, 1)
         }
       }
+      forceUpdate()
     },
-    [caches, destroyRemovedPane],
+    [destroyRemovedPane, forceUpdate],
   )
 
-  const updateTabCache = useCallback((id: string, children: React.ReactNode): void => {
-    setCaches((prev) => {
-      const next = new Map(prev)
-      let cache = next.get(id)
-      if (cache) {
-        cache.portal = createPortal(children, cache.div, cache.id)
+  const updateTabCache = useCallback(
+    (id: string, children: React.ReactNode, owner: any): TabPaneCache => {
+      let cache = caches.current.get(id)
+
+      if (!cache) {
+        let div = document.createElement("div")
+        div.className = "dock-pane-cache"
+        cache = { div, id, owner }
       }
-      return next
-    })
-  }, [])
+
+      cache = { ...cache, portal: createPortal(children, cache.div, cache.id) }
+
+      caches.current.set(id, cache)
+
+      forceUpdate()
+
+      return cache
+    },
+    [forceUpdate],
+  )
 
   const value: PortalManager = useMemo(
-    () => ({ caches, getTabCache, removeTabCache, updateTabCache }),
-    [caches, getTabCache, removeTabCache, updateTabCache],
+    () => ({ removeTabCache, updateTabCache }),
+    [removeTabCache, updateTabCache],
   )
-
-  return (
-    <PortalManagerContextType.Provider value={value}>{children}</PortalManagerContextType.Provider>
-  )
-}
-
-export const RenderDockPortals = () => {
-  const { caches } = usePortalManager()
 
   let portals: React.ReactPortal[] = []
-  for (let [, cache] of caches) {
+  for (let [, cache] of caches.current) {
     if (cache.portal) {
       portals.push(cache.portal)
     }
   }
 
-  return <>{portals}</>
+  return (
+    <PortalManagerContextType.Provider value={value}>
+      {children}
+      <>{portals}</>
+    </PortalManagerContextType.Provider>
+  )
 }

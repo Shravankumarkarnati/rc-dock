@@ -285,12 +285,20 @@ export const DockTabs = ({
         key: tab.id,
         label: <TabLabel data={tab} />,
         children: (
-          <DockTabPane key={tab.id} cacheId={tab.id} cached={tab.cached}>
+          <DockTabPane
+            id={tab.id}
+            key={tab.id}
+            cacheId={tab.id}
+            cached={tab.cached}
+            active={tab.id === activeId}
+            animated={animated}
+            prefixCls="dock"
+          >
             {typeof tab.content === "function" ? tab.content(tab) : tab.content}
           </DockTabPane>
         ),
       })),
-    [tabs],
+    [activeId, animated, tabs],
   )
 
   return (
