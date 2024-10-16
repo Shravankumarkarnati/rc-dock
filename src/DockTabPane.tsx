@@ -44,16 +44,15 @@ const DockTabPane = ({
 
   React.useEffect(() => {
     if (ref.current) {
-      console.log("update", id)
       updateTabCache(id, children, ref.current)
     }
   }, [children, id, updateTabCache])
 
   React.useEffect(() => {
     return () => {
-      console.log("remove")
       removeTabCache(id, ref.current)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   let visited = false

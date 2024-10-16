@@ -24,15 +24,19 @@ export const DockPortalManager = ({ children }) => {
                 // it could be reused by another component, so let's wait
                 pendingDestroy.current = setTimeout(destroyRemovedPane, 1);
             }
+            forceUpdate();
         }
-        forceUpdate();
     }, [destroyRemovedPane, forceUpdate]);
     const updateTabCache = useCallback((id, children, owner) => {
+        var _a;
         let cache = caches.current.get(id);
         if (!cache) {
             let div = document.createElement("div");
             div.className = "dock-pane-cache";
             cache = { div, id, owner };
+        }
+        if (((_a = cache.portal) === null || _a === void 0 ? void 0 : _a.children) === children) {
+            return cache;
         }
         cache = Object.assign(Object.assign({}, cache), { portal: createPortal(children, cache.div, cache.id) });
         caches.current.set(id, cache);
@@ -40,12 +44,9 @@ export const DockPortalManager = ({ children }) => {
         return cache;
     }, [forceUpdate]);
     const value = useMemo(() => ({ removeTabCache, updateTabCache }), [removeTabCache, updateTabCache]);
-    let portals = [];
-    for (let [, cache] of caches.current) {
-        if (cache.portal) {
-            portals.push(cache.portal);
-        }
-    }
+    const portals = [...caches.current.values()]
+        .map((cache) => cache.portal)
+        .filter((i) => !!i);
     return (React.createElement(PortalManagerContextType.Provider, { value: value },
         children,
         React.createElement(React.Fragment, null, portals)));

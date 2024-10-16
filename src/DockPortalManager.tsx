@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useRef } from "react"
-import { TabPaneCache } from "./DockData"
+import React, { ReactPortal, useCallback, useMemo, useRef } from "react"
 import { createPortal } from "react-dom"
+import { TabPaneCache } from "./DockData"
 import { useForceUpdate } from "./UseForceUpdate"
 
 type PortalManager = {
@@ -41,8 +41,8 @@ export const DockPortalManager = ({ children }: Props) => {
           // it could be reused by another component, so let's wait
           pendingDestroy.current = setTimeout(destroyRemovedPane, 1)
         }
+        forceUpdate()
       }
-      forceUpdate()
     },
     [destroyRemovedPane, forceUpdate],
   )
@@ -55,6 +55,10 @@ export const DockPortalManager = ({ children }: Props) => {
         let div = document.createElement("div")
         div.className = "dock-pane-cache"
         cache = { div, id, owner }
+      }
+
+      if (cache.portal?.children === children) {
+        return cache
       }
 
       cache = { ...cache, portal: createPortal(children, cache.div, cache.id) }
@@ -73,12 +77,9 @@ export const DockPortalManager = ({ children }: Props) => {
     [removeTabCache, updateTabCache],
   )
 
-  let portals: React.ReactPortal[] = []
-  for (let [, cache] of caches.current) {
-    if (cache.portal) {
-      portals.push(cache.portal)
-    }
-  }
+  const portals: ReactPortal[] = [...caches.current.values()]
+    .map((cache) => cache.portal)
+    .filter((i) => !!i)
 
   return (
     <PortalManagerContextType.Provider value={value}>
