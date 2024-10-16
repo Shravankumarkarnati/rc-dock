@@ -1,17 +1,17 @@
-import * as React from "react";
-import { useDockContext, } from "./DockData";
-import Tabs from "rc-tabs";
-import Menu, { MenuItem } from "rc-menu";
+import classNames from "classnames";
 import Dropdown from "rc-dropdown";
-import * as DragManager from "./dragdrop/DragManager";
-import { DragDropDiv } from "./dragdrop/DragDropDiv";
+import Menu, { MenuItem } from "rc-menu";
+import Tabs from "rc-tabs";
+import * as React from "react";
+import { getFloatPanelSize } from "./Algorithm";
+import { useDockContext, } from "./DockData";
 import { DockTabBar } from "./DockTabBar";
 import DockTabPane from "./DockTabPane";
-import { getFloatPanelSize } from "./Algorithm";
-import { isWindowBoxEnabled } from "./WindowBox";
-import { groupClassNames } from "./Utils";
-import classNames from "classnames";
+import { DragDropDiv } from "./dragdrop/DragDropDiv";
+import * as DragManager from "./dragdrop/DragManager";
 import { useForceUpdate } from "./UseForceUpdate";
+import { groupClassNames } from "./Utils";
+import { isWindowBoxEnabled } from "./WindowBox";
 function findParentPanel(element) {
     for (let i = 0; i < 10; ++i) {
         if (!element) {
@@ -273,7 +273,7 @@ export const DockTabs = React.memo(function DockTabBase(props) {
         moreIcon = "...";
     }
     let children = [];
-    for (let [id, tab] of cache) {
+    for (let [, tab] of cache) {
         children.push(tab.content);
     }
     return (React.createElement(Tabs, { prefixCls: "dock", moreIcon: moreIcon, animated: animated, renderTabBar: renderTabBar, activeKey: activeId, onChange: onTabChange, popupClassName: classNames(groupClassNames(group)) }, children));
