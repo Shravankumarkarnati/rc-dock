@@ -1,10 +1,7 @@
 import * as React from "react";
-import { BoxData, PanelData } from "./DockData";
+import { BoxData } from "./DockData";
 interface Props {
     boxData: BoxData;
 }
-export declare class MaxBox extends React.PureComponent<Props, any> {
-    hidePanelData: PanelData;
-    render(): React.ReactNode;
-}
+export declare const MaxBox: React.NamedExoticComponent<Props>;
 export {};

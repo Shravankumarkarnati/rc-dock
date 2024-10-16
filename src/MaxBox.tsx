@@ -1,39 +1,32 @@
 import * as React from "react";
-import {BoxData, PanelData} from "./DockData";
-import {DockPanel} from "./DockPanel";
+import { BoxData, PanelData } from "./DockData";
+import { DockPanel } from "./DockPanel";
 
 interface Props {
   boxData: BoxData;
 }
 
-export class MaxBox extends React.PureComponent<Props, any> {
+export const MaxBox = React.memo(function MaxBoxBase({ boxData }: Props) {
+  let panelData = boxData.children[0] as PanelData;
+  let hidePanelData: PanelData;
 
-  // a place holder panel data to be used during hide animation
-  hidePanelData: PanelData;
-
-  render(): React.ReactNode {
-    let panelData = this.props.boxData.children[0] as PanelData;
-
-    if (panelData) {
-      this.hidePanelData = {...panelData, id: '', tabs: []};
-      return (
-        <div className="dock-box dock-mbox dock-mbox-show">
-          <DockPanel size={100} panelData={panelData}/>
-        </div>
-      );
-    } else if (this.hidePanelData) {
-      // use the hiden data only once, dont keep it for too long
-      let hidePanelData = this.hidePanelData;
-      this.hidePanelData = null;
-      return (
-        <div className="dock-box dock-mbox dock-mbox-hide">
-          <DockPanel size={100} panelData={hidePanelData}/>
-        </div>
-      );
-    } else {
-      return (
-        <div className="dock-box dock-mbox dock-mbox-hide"/>
-      );
-    }
+  if (panelData) {
+    hidePanelData = { ...panelData, id: "", tabs: [] };
+    return (
+      <div className="dock-box dock-mbox dock-mbox-show">
+        <DockPanel size={100} panelData={panelData} />
+      </div>
+    );
+  } else if (hidePanelData) {
+    // use the hiden data only once, dont keep it for too long
+    let _hidePanelData = hidePanelData;
+    hidePanelData = null;
+    return (
+      <div className="dock-box dock-mbox dock-mbox-hide">
+        <DockPanel size={100} panelData={_hidePanelData} />
+      </div>
+    );
+  } else {
+    return <div className="dock-box dock-mbox dock-mbox-hide" />;
   }
-}
+});
