@@ -28,6 +28,7 @@ import * as Serializer from "./Serializer";
 import * as DragManager from "./dragdrop/DragManager";
 import {MaxBox} from "./MaxBox";
 import {WindowBox} from "./WindowBox";
+import {DroppingPanel} from "./DroppingPanel";
 
 export interface LayoutProps {
   /**
@@ -394,7 +395,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
   /** @ignore */
   onDragStateChange = (draggingScope: any) => {
     if (draggingScope == null) {
-      DockPanel.droppingPanel = null;
+      DroppingPanel.droppingPanel = null;
       if (this.state.dropRect) {
         this.setState({dropRect: null});
       }

@@ -15,12 +15,12 @@ import debounce from 'lodash/debounce';
 import { defaultGroup, DockContextProvider, placeHolderGroup, placeHolderStyle } from "./DockData";
 import { DockBox } from "./DockBox";
 import { FloatBox } from "./FloatBox";
-import { DockPanel } from "./DockPanel";
 import * as Algorithm from "./Algorithm";
 import * as Serializer from "./Serializer";
 import * as DragManager from "./dragdrop/DragManager";
 import { MaxBox } from "./MaxBox";
 import { WindowBox } from "./WindowBox";
+import { DroppingPanel } from "./DroppingPanel";
 class DockPortalManager extends React.PureComponent {
     constructor() {
         super(...arguments);
@@ -86,7 +86,7 @@ export class DockLayout extends DockPortalManager {
         /** @ignore */
         this.onDragStateChange = (draggingScope) => {
             if (draggingScope == null) {
-                DockPanel.droppingPanel = null;
+                DroppingPanel.droppingPanel = null;
                 if (this.state.dropRect) {
                     this.setState({ dropRect: null });
                 }
