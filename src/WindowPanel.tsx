@@ -1,65 +1,67 @@
-import * as React from "react";
 import NewWindow from "rc-new-window";
-import {DockContext, DockContextType, PanelData} from "./DockData";
-import {DockPanel} from "./DockPanel";
-import {mapElementToScreenRect, mapWindowToElement} from "rc-new-window/lib/ScreenPosition";
-
+import {
+  mapElementToScreenRect,
+  mapWindowToElement,
+} from "rc-new-window/lib/ScreenPosition";
+import * as React from "react";
+import { PanelData, useDockContext } from "./DockData";
+import { DockPanel } from "./DockPanel";
 
 interface Props {
   panelData: PanelData;
 }
 
-export class WindowPanel extends React.PureComponent<Props, any> {
-  static contextType = DockContextType;
+export const WindowPanel = React.memo(function WindowPanelBase({
+  panelData,
+}: Props) {
+  const context = useDockContext();
 
-  context!: DockContext;
-  _window: Window;
+  const _window = React.useRef<Window | null>(null);
 
-  onOpen = (w: Window) => {
-    if (!this._window && w) {
-      this._window = w;
+  const onOpen = React.useCallback((_w: Window) => {
+    if (!_window.current && _w) {
+      _window.current = _w;
     }
-  };
-  onUnload = () => {
-    let {panelData} = this.props;
-    let layoutRoot = this.context.getRootElement();
-    const rect = mapWindowToElement(layoutRoot, this._window);
+  }, []);
+
+  const onUnload = React.useCallback(() => {
+    let layoutRoot = context.getRootElement();
+    const rect = mapWindowToElement(layoutRoot, _window.current);
     if (rect.width > 0 && rect.height > 0) {
       panelData.x = rect.left;
       panelData.y = rect.top;
       panelData.w = rect.width;
       panelData.h = rect.height;
     }
-    this.context.dockMove(panelData, null, 'float');
-  };
+    context.dockMove(panelData, null, "float");
+  }, [panelData, context.getRootElement, context.dockMove]);
 
-  initPopupInnerRect = () => {
-    let {panelData} = this.props;
-    return mapElementToScreenRect(this.context.getRootElement(), {
+  const initPopupInnerRect = React.useCallback(() => {
+    return mapElementToScreenRect(context.getRootElement(), {
       left: panelData.x,
       top: panelData.y,
       width: panelData.w,
-      height: panelData.h
+      height: panelData.h,
     }) as any;
-  };
+  }, [context.getRootElement, panelData]);
 
-
-  render(): React.ReactNode {
-    let {panelData} = this.props;
-
-    let {x, y, w, h} = panelData;
-
-    return <NewWindow copyStyles={true}
-                      onOpen={this.onOpen}
-                      onClose={this.onUnload}
-                      onBlock={this.onUnload}
-                      initPopupInnerRect={this.initPopupInnerRect}
-                      width={w}
-                      height={h}
+  return (
+    <NewWindow
+      copyStyles={true}
+      onOpen={onOpen}
+      onClose={onUnload}
+      onBlock={onUnload}
+      initPopupInnerRect={initPopupInnerRect}
+      width={panelData.w}
+      height={panelData.h}
     >
-      <div className='dock-wbox'>
-        <DockPanel size={panelData.size} panelData={panelData} key={panelData.id}/>
+      <div className="dock-wbox">
+        <DockPanel
+          size={panelData.size}
+          panelData={panelData}
+          key={panelData.id}
+        />
       </div>
-    </NewWindow>;
-  }
-}
+    </NewWindow>
+  );
+});

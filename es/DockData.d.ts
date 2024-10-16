@@ -7,7 +7,7 @@ export interface TabGroup {
      *
      * default: false
      */
-    floatable?: boolean | 'singleTab';
+    floatable?: boolean | "singleTab";
     /**
      * Whether tab can be converted to native window, only works when floatable is true.
      *
@@ -83,7 +83,7 @@ interface DockDataBase {
     minWidth?: number;
     minHeight?: number;
 }
-export declare type DockMode = 'horizontal' | 'vertical' | 'float' | 'window' | 'maximize';
+export declare type DockMode = "horizontal" | "vertical" | "float" | "window" | "maximize";
 export interface TabBase {
     /**
      * id must be unique
@@ -242,7 +242,7 @@ export interface LayoutData extends LayoutBase {
      */
     loadedFrom?: LayoutBase;
 }
-export declare type DropDirection = 'left' | 'right' | 'bottom' | 'top' | 'middle' | 'remove' | 'before-tab' | 'after-tab' | 'float' | 'front' | 'maximize' | 'new-window' | 'move' | 'active' | 'update';
+export declare type DropDirection = "left" | "right" | "bottom" | "top" | "middle" | "remove" | "before-tab" | "after-tab" | "float" | "front" | "maximize" | "new-window" | "move" | "active" | "update";
 export interface FloatSize {
     width: number;
     height: number;
@@ -320,4 +320,6 @@ export declare const DockContextType: React.Context<DockContext>;
 export declare const DockContextProvider: React.Provider<DockContext>;
 /** @ignore */
 export declare const DockContextConsumer: React.Consumer<DockContext>;
+/** @ignore */
+export declare const useDockContext: () => DockContext;
 export {};

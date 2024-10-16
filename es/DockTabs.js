@@ -8,7 +8,7 @@ import { DragDropDiv } from "./dragdrop/DragDropDiv";
 import { DockTabBar } from "./DockTabBar";
 import DockTabPane from "./DockTabPane";
 import { getFloatPanelSize } from "./Algorithm";
-import { WindowBox } from "./WindowBox";
+import { isWindowBoxEnabled } from "./WindowBox";
 import { groupClassNames } from "./Utils";
 import classNames from "classnames";
 function findParentPanel(element) {
@@ -196,7 +196,7 @@ export class DockTabs extends React.PureComponent {
                     panelExtra = panelLock.panelExtra;
                 }
             }
-            let showNewWindowButton = group.newWindow && WindowBox.enabled && panelData.parent.mode === 'float';
+            let showNewWindowButton = group.newWindow && isWindowBoxEnabled() && panelData.parent.mode === 'float';
             let panelExtraContent;
             if (panelExtra) {
                 panelExtraContent = panelExtra(panelData, this.context);

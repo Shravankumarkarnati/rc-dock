@@ -3,8 +3,6 @@ import { BoxData } from "./DockData";
 interface Props {
     boxData: BoxData;
 }
-export declare class WindowBox extends React.PureComponent<Props, any> {
-    static enabled: boolean;
-    render(): React.ReactNode;
-}
+export declare const WindowBox: React.NamedExoticComponent<Props>;
+export declare const isWindowBoxEnabled: () => boolean;
 export {};
