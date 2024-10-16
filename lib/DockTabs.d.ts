@@ -26,19 +26,5 @@ interface Props {
     onPanelDragMove: DragManager.DragHandler;
     onPanelDragEnd: DragManager.DragHandler;
 }
-export declare class DockTabs extends React.PureComponent<Props> {
-    static contextType: React.Context<DockContext>;
-    static readonly propKeys: string[];
-    context: DockContext;
-    _cache: Map<string, TabCache>;
-    cachedTabs: TabData[];
-    updateTabs(tabs: TabData[]): void;
-    onMaximizeClick: (e: React.MouseEvent) => void;
-    onNewWindowClick: () => void;
-    addNewWindowMenu(element: React.ReactElement, showWithLeftClick: boolean): JSX.Element;
-    onCloseAll: () => void;
-    renderTabBar: (props: any, TabNavList: React.ComponentType) => JSX.Element;
-    onTabChange: (activeId: string) => void;
-    render(): React.ReactNode;
-}
+export declare const DockTabs: React.NamedExoticComponent<Props>;
 export {};
