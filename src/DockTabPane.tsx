@@ -2,6 +2,7 @@ import classNames from "classnames";
 import { TabPaneProps } from "rc-tabs";
 import * as React from "react";
 import { TabPaneCache, useDockContext } from "./DockData";
+import { useDockPortalManager } from "./DockPortalManager";
 
 interface DockTabPaneProps extends TabPaneProps {
   cacheId?: string;
@@ -11,7 +12,7 @@ interface DockTabPaneProps extends TabPaneProps {
 const DockTabPane = React.memo(function DockTabPaneBase(
   props: DockTabPaneProps
 ) {
-  const context = useDockContext();
+  const context = useDockPortalManager();
 
   const [ref, setRefBase] = React.useState<null | HTMLElement>(null);
 

@@ -1,8 +1,8 @@
 import classNames from "classnames";
 import * as React from "react";
-import { useDockContext } from "./DockData";
+import { useDockPortalManager } from "./DockPortalManager";
 const DockTabPane = React.memo(function DockTabPaneBase(props) {
-    const context = useDockContext();
+    const context = useDockPortalManager();
     const [ref, setRefBase] = React.useState(null);
     const _cache = React.useRef(null);
     const { active, animated, cached, cacheId, children, className, destroyInactiveTabPane, forceRender, id, prefixCls, style, tabKey, } = props;

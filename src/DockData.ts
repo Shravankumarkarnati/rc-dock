@@ -390,15 +390,6 @@ export interface DockContext {
   navigateToPanel(fromElement: HTMLElement, direction?: string): void;
 
   /** @ignore */
-  getTabCache(id: string, owner: any): TabPaneCache;
-
-  /** @ignore */
-  removeTabCache(id: string, owner: any): void;
-
-  /** @ignore */
-  updateTabCache(id: string, portal: React.ReactNode): void;
-
-  /** @ignore */
   getRootElement(): HTMLDivElement;
 }
 

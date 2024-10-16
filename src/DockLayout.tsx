@@ -1,13 +1,14 @@
+import debounce from "lodash/debounce";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import debounce from 'lodash/debounce';
+import * as Algorithm from "./Algorithm";
+import { DockBox } from "./DockBox";
 import {
   BoxData,
   defaultGroup,
   DockContext,
   DockContextProvider,
   DropDirection,
-  FloatPosition,
   LayoutBase,
   LayoutData,
   LayoutSize,
@@ -18,17 +19,15 @@ import {
   TabBase,
   TabData,
   TabGroup,
-  TabPaneCache
 } from "./DockData";
-import {DockBox} from "./DockBox";
-import {FloatBox} from "./FloatBox";
-import {DockPanel} from "./DockPanel";
-import * as Algorithm from "./Algorithm";
-import * as Serializer from "./Serializer";
+import { DockPortalManager } from "./DockPortalManager";
 import * as DragManager from "./dragdrop/DragManager";
-import {MaxBox} from "./MaxBox";
-import {WindowBox} from "./WindowBox";
-import {DroppingPanel} from "./DroppingPanel";
+import { DroppingPanel } from "./DroppingPanel";
+import { FloatBox } from "./FloatBox";
+import { MaxBox } from "./MaxBox";
+import * as Serializer from "./Serializer";
+import { useForceUpdate } from "./UseForceUpdate";
+import { WindowBox } from "./WindowBox";
 
 export interface LayoutProps {
   /**
@@ -52,21 +51,25 @@ export interface LayoutProps {
   /**
    * Tab Groups, defines additional configuration for different groups
    */
-  groups?: {[key: string]: TabGroup};
+  groups?: { [key: string]: TabGroup };
 
   /**
    * @param newLayout layout data can be set to [[LayoutProps.layout]] directly when used as controlled component
    * @param currentTabId id of current tab
    * @param direction direction of the dock change
    */
-  onLayoutChange?(newLayout: LayoutBase, currentTabId?: string, direction?: DropDirection): void;
+  onLayoutChange?(
+    newLayout: LayoutBase,
+    currentTabId?: string,
+    direction?: DropDirection
+  ): void;
 
   /**
    * - default mode: showing 4 to 9 squares to help picking drop areas
    * - edge mode: using the distance between mouse and panel border to pick drop area
    *   - in edge mode, dragging float panel's header won't bring panel back to dock layer
    */
-  dropMode?: 'default' | 'edge';
+  dropMode?: "default" | "edge";
 
   /**
    * override the default saveTab behavior
@@ -102,554 +105,604 @@ export interface LayoutProps {
   maximizeTo?: string | HTMLElement;
 }
 
+type DockRef = {
+  saveLayout(): LayoutBase;
+  loadLayout(savedLayout: LayoutBase): void;
+} & Pick<DockContext, "dockMove" | "find" | "updateTab">;
+
 interface LayoutState {
   layout: LayoutData;
   /** @ignore */
-  dropRect?: {left: number, width: number, top: number, height: number, element: HTMLElement, source?: any, direction?: DropDirection};
+  dropRect?: {
+    left: number;
+    width: number;
+    top: number;
+    height: number;
+    element: HTMLElement;
+    source?: any;
+    direction?: DropDirection;
+  };
 }
 
-class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
-  /** @ignore */
-  _caches = new Map<string, TabPaneCache>();
+const DockLayoutBase = React.forwardRef<DockRef, LayoutProps>(
+  function _DockLayout(props, ref) {
+    const forceUpdate = useForceUpdate();
 
-  _pendingDestroy: any;
+    let {
+      groups,
+      loadTab,
+      dockId,
+      style,
+      maximizeTo,
+      layout,
+      onLayoutChange,
+      saveTab,
+      afterPanelSaved,
+      dropMode,
+      defaultLayout,
+    } = props;
 
-  _isMounted = false;
-
-  destroyRemovedPane = () => {
-    this._pendingDestroy = null;
-    let cacheRemoved = false;
-    for (let [id, cache] of this._caches) {
-      if (cache.owner == null) {
-        this._caches.delete(id);
-        cacheRemoved = true;
+    const [_ref, setRef] = React.useState<HTMLDivElement | null>(null);
+    const [state, setState] = React.useState<LayoutState>(() => {
+      let preparedLayout: LayoutData;
+      if (defaultLayout) {
+        preparedLayout = prepareInitData(props.defaultLayout, groups, loadTab);
+      } else if (!loadTab) {
+        throw new Error(
+          "DockLayout.loadTab and DockLayout.defaultLayout should not both be undefined."
+        );
       }
-    }
-    if (cacheRemoved && this._isMounted) {
-      this.forceUpdate();
-    }
-  };
 
-
-  /** @ignore */
-  getTabCache(id: string, owner: any): TabPaneCache {
-    let cache = this._caches.get(id);
-    if (!cache) {
-      let div = document.createElement('div');
-      div.className = 'dock-pane-cache';
-      cache = {div, id, owner};
-      this._caches.set(id, cache);
-    } else {
-      cache.owner = owner;
-    }
-
-    return cache;
-  }
-
-  /** @ignore */
-  removeTabCache(id: string, owner: any): void {
-    let cache = this._caches.get(id);
-    if (cache && cache.owner === owner) {
-      cache.owner = null;
-      if (!this._pendingDestroy) {
-        // it could be reused by another component, so let's wait
-        this._pendingDestroy = setTimeout(this.destroyRemovedPane, 1);
-      }
-    }
-  }
-
-  /** @ignore */
-  updateTabCache(id: string, children: React.ReactNode): void {
-    let cache = this._caches.get(id);
-    if (cache) {
-      cache.portal = ReactDOM.createPortal(children, cache.div, cache.id);
-      this.forceUpdate();
-    }
-  }
-}
-
-export class DockLayout extends DockPortalManager implements DockContext {
-  /** @ignore */
-  _ref: HTMLDivElement;
-  /** @ignore */
-  getRef = (r: HTMLDivElement) => {
-    this._ref = r;
-  };
-
-  /** @ignore */
-  getRootElement() {
-    return this._ref;
-  }
-
-  /** @ignore */
-  prepareInitData(data: LayoutData): LayoutData {
-    let layout = {...data};
-    Algorithm.fixLayoutData(layout, this.props.groups, this.props.loadTab);
-    return layout;
-  }
-
-  /** @ignore */
-  getDockId(): any {
-    return this.props.dockId || this;
-  }
-
-  /** @inheritDoc */
-  getGroup(name: string) {
-    if (name) {
-      let {groups} = this.props;
-      if (groups && name in groups) {
-        return groups[name];
-      }
-      if (name === placeHolderStyle) {
-        return placeHolderGroup;
-      }
-    }
-    return defaultGroup;
-  }
-
-  /**
-   * @inheritDoc
-   * @param source @inheritDoc
-   * @param target @inheritDoc
-   * @param direction @inheritDoc
-   * @param floatPosition @inheritDoc
-   */
-  dockMove(
-    source: TabData | PanelData,
-    target: string | TabData | PanelData | BoxData | null,
-    direction: DropDirection,
-    floatPosition?: FloatPosition
-  ) {
-    let layout = this.getLayout();
-    if (direction === 'maximize') {
-      layout = Algorithm.maximize(layout, source);
-      this.panelToFocus = source.id;
-    } else if (direction === 'front') {
-      layout = Algorithm.moveToFront(layout, source);
-    } else {
-      layout = Algorithm.removeFromLayout(layout, source);
-    }
-
-    if (typeof target === 'string') {
-      target = this.find(target, Algorithm.Filter.All);
-    } else {
-      target = Algorithm.getUpdatedObject(target); // target might change during removeTab
-    }
-
-    if (direction === 'float') {
-      let newPanel = Algorithm.converToPanel(source);
-      newPanel.z = Algorithm.nextZIndex(null);
-      if (this.state.dropRect || floatPosition) {
-        layout = Algorithm.floatPanel(layout, newPanel, this.state.dropRect || floatPosition);
+      if (layout) {
+        // controlled layout
+        return {
+          layout: loadLayoutData(layout, props),
+          dropRect: null,
+        };
       } else {
-        layout = Algorithm.floatPanel(layout, newPanel);
-        if (this._ref) {
-          layout = Algorithm.fixFloatPanelPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
-        }
+        return {
+          layout: preparedLayout,
+          dropRect: null,
+        };
       }
-    } else if (direction === 'new-window') {
-      let newPanel = Algorithm.converToPanel(source);
-      layout = Algorithm.panelToWindow(layout, newPanel);
-    } else if (target) {
-      if ('tabs' in (target as PanelData)) {
-        // panel target
-        if (direction === 'middle') {
-          layout = Algorithm.addTabToPanel(layout, source, target as PanelData);
+    });
+
+    /** @ignore
+     * layout state doesn't change instantly after setState, use this to make sure the correct layout is
+     */
+    const tempLayout = React.useRef<null | LayoutData>(null);
+    const panelToFocus = React.useRef<null | string>(null);
+
+    const getRootElement = React.useCallback(() => _ref, [_ref]);
+    const getDockId = React.useCallback(() => dockId, [dockId]);
+    const useEdgeDrop = React.useCallback(
+      () => dropMode === "edge",
+      [dropMode]
+    );
+    const getGroup = React.useCallback(
+      (name: string) => {
+        if (name) {
+          if (groups && name in groups) {
+            return groups[name];
+          }
+          if (name === placeHolderStyle) {
+            return placeHolderGroup;
+          }
+        }
+        return defaultGroup;
+      },
+      [groups]
+    );
+
+    const getLayout = React.useCallback(
+      (): LayoutData => tempLayout.current || state.layout,
+      [state.layout]
+    );
+
+    const setLayout = React.useCallback((layout: LayoutData) => {
+      tempLayout.current = layout;
+      setState((prev) => ({ ...prev, layout }));
+    }, []);
+
+    const find: DockContext["find"] = React.useCallback(
+      (id, filter): PanelData | TabData | BoxData | undefined =>
+        Algorithm.find(getLayout(), id, filter),
+      [getLayout]
+    );
+
+    const changeLayout = React.useCallback(
+      (
+        layoutData: LayoutData,
+        currentTabId: string,
+        direction: DropDirection,
+        silent: boolean = false
+      ) => {
+        let savedLayout: LayoutBase;
+        if (onLayoutChange) {
+          savedLayout = Serializer.saveLayoutData(
+            layoutData,
+            saveTab,
+            afterPanelSaved
+          );
+          layoutData.loadedFrom = savedLayout;
+          onLayoutChange(savedLayout, currentTabId, direction);
+          if (layout) {
+            // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
+            forceUpdate();
+          }
+        }
+        if (!layout && !silent) {
+          // uncontrolled layout when Props.layout is not defined
+          setLayout(layoutData);
+        }
+      },
+      [layout, onLayoutChange, saveTab, afterPanelSaved, forceUpdate, setLayout]
+    );
+
+    const dockMove: DockContext["dockMove"] = React.useCallback(
+      (source, target, direction, floatPosition) => {
+        let layout = getLayout();
+        if (direction === "maximize") {
+          layout = Algorithm.maximize(layout, source);
+          panelToFocus.current = source.id;
+        } else if (direction === "front") {
+          layout = Algorithm.moveToFront(layout, source);
         } else {
+          layout = Algorithm.removeFromLayout(layout, source);
+        }
+
+        if (typeof target === "string") {
+          target = find(target, Algorithm.Filter.All);
+        } else {
+          target = Algorithm.getUpdatedObject(target); // target might change during removeTab
+        }
+
+        if (direction === "float") {
           let newPanel = Algorithm.converToPanel(source);
-          layout = Algorithm.dockPanelToPanel(layout, newPanel, target as PanelData, direction);
+          newPanel.z = Algorithm.nextZIndex(null);
+          if (state.dropRect || floatPosition) {
+            layout = Algorithm.floatPanel(
+              layout,
+              newPanel,
+              state.dropRect || floatPosition
+            );
+          } else {
+            layout = Algorithm.floatPanel(layout, newPanel);
+            if (_ref) {
+              layout = Algorithm.fixFloatPanelPos(
+                layout,
+                _ref.offsetWidth,
+                _ref.offsetHeight
+              );
+            }
+          }
+        } else if (direction === "new-window") {
+          let newPanel = Algorithm.converToPanel(source);
+          layout = Algorithm.panelToWindow(layout, newPanel);
+        } else if (target) {
+          if ("tabs" in (target as PanelData)) {
+            // panel target
+            if (direction === "middle") {
+              layout = Algorithm.addTabToPanel(
+                layout,
+                source,
+                target as PanelData
+              );
+            } else {
+              let newPanel = Algorithm.converToPanel(source);
+              layout = Algorithm.dockPanelToPanel(
+                layout,
+                newPanel,
+                target as PanelData,
+                direction
+              );
+            }
+          } else if ("children" in (target as BoxData)) {
+            // box target
+            let newPanel = Algorithm.converToPanel(source);
+            layout = Algorithm.dockPanelToBox(
+              layout,
+              newPanel,
+              target as BoxData,
+              direction
+            );
+          } else {
+            // tab target
+            layout = Algorithm.addNextToTab(
+              layout,
+              source,
+              target as TabData,
+              direction
+            );
+          }
+        }
+        if (layout !== getLayout()) {
+          layout = Algorithm.fixLayoutData(layout, groups);
+          const currentTabId: string = source.hasOwnProperty("tabs")
+            ? (source as PanelData).activeId
+            : (source as TabData).id;
+          changeLayout(layout, currentTabId, direction);
+        }
+      },
+      [getLayout, find, state.dropRect, _ref, groups, changeLayout]
+    );
+
+    const getLayoutSize = React.useCallback((): LayoutSize => {
+      if (_ref) {
+        return { width: _ref.offsetWidth, height: _ref.offsetHeight };
+      }
+      return { width: 0, height: 0 };
+    }, [_ref]);
+
+    const updateTab: DockContext["updateTab"] = React.useCallback(
+      (id, newTab, makeActive) => {
+        let tab = find(id, Algorithm.Filter.AnyTab) as TabData;
+        if (!tab) {
+          return false;
+        }
+        let panelData = tab.parent;
+        let idx = panelData.tabs.indexOf(tab);
+        if (idx >= 0) {
+          let layout = getLayout();
+          if (newTab) {
+            let activeId = panelData.activeId;
+            if (loadTab && !("content" in newTab && "title" in newTab)) {
+              newTab = loadTab(newTab);
+            }
+            layout = Algorithm.removeFromLayout(layout, tab); // remove old tab
+            panelData = Algorithm.getUpdatedObject(panelData); // panelData might change during removeTab
+            layout = Algorithm.addTabToPanel(layout, newTab, panelData, idx); // add new tab
+            panelData = Algorithm.getUpdatedObject(panelData); // panelData might change during addTabToPanel
+            if (!makeActive) {
+              // restore the previous activeId
+              panelData.activeId = activeId;
+              panelToFocus.current = panelData.id;
+            }
+          } else if (makeActive && panelData.activeId !== id) {
+            layout = Algorithm.replacePanel(layout, panelData, {
+              ...panelData,
+              activeId: id,
+            });
+          }
+
+          layout = Algorithm.fixLayoutData(layout, groups);
+          changeLayout(layout, newTab?.id ?? id, "update");
+          return true;
+        }
+      },
+      [find, loadTab, getLayout, groups, changeLayout]
+    );
+
+    const navigateToPanel: DockContext["navigateToPanel"] = React.useCallback(
+      (fromElement, direction) => {
+        if (!direction) {
+          if (!fromElement) {
+            fromElement = _ref.querySelector(".dock-tab-active>.dock-tab-btn");
+          }
+          fromElement.focus();
+          return;
+        }
+        let targetTab: HTMLElement;
+        // use panel rect when move left/right, and use tabbar rect for up/down
+        let selector =
+          direction === "ArrowUp" || direction === "ArrowDown"
+            ? ".dock>.dock-bar"
+            : ".dock-box>.dock-panel";
+        let panels = Array.from(_ref.querySelectorAll(selector));
+
+        let currentPanel = panels.find((panel) => panel.contains(fromElement));
+        let currentRect = currentPanel.getBoundingClientRect();
+        let matches: any[] = [];
+        for (let panel of panels) {
+          if (panel !== currentPanel) {
+            let rect = panel.getBoundingClientRect();
+            let distance = Algorithm.findNearestPanel(
+              currentRect,
+              rect,
+              direction
+            );
+            if (distance >= 0) {
+              matches.push({ panel, rect, distance });
+            }
+          }
+        }
+        matches.sort((a, b) => a.distance - b.distance);
+        for (let match of matches) {
+          targetTab = match.panel.querySelector(
+            ".dock-tab-active>.dock-tab-btn"
+          );
+          if (targetTab) {
+            break;
+          }
         }
 
-      } else if ('children' in (target as BoxData)) {
-        // box target
-        let newPanel = Algorithm.converToPanel(source);
-        layout = Algorithm.dockPanelToBox(layout, newPanel, target as BoxData, direction);
-      } else {
-        // tab target
-        layout = Algorithm.addNextToTab(layout, source, target as TabData, direction);
-      }
-    }
-    if (layout !== this.getLayout()) {
-      layout = Algorithm.fixLayoutData(layout, this.props.groups);
-      const currentTabId: string = source.hasOwnProperty('tabs') ? (source as PanelData).activeId : (source as TabData).id;
-      this.changeLayout(layout, currentTabId, direction);
-    }
-    this.onDragStateChange(false);
-  }
-
-  /** @inheritDoc */
-  find(id: string, filter?: Algorithm.Filter): PanelData | TabData | BoxData | undefined {
-    return Algorithm.find(this.getLayout(), id, filter);
-  }
-
-  /** @ignore */
-  getLayoutSize(): LayoutSize {
-    if (this._ref) {
-      return {width: this._ref.offsetWidth, height: this._ref.offsetHeight};
-    }
-    return {width: 0, height: 0};
-  }
-
-  /** @inheritDoc */
-  updateTab(id: string, newTab: TabData | null, makeActive: boolean = true): boolean {
-    let tab = this.find(id, Algorithm.Filter.AnyTab) as TabData;
-    if (!tab) {
-      return false;
-    }
-    let panelData = tab.parent;
-    let idx = panelData.tabs.indexOf(tab);
-    if (idx >= 0) {
-      let {loadTab} = this.props;
-      let layout = this.getLayout();
-      if (newTab) {
-        let activeId = panelData.activeId;
-        if (loadTab && !('content' in newTab && 'title' in newTab)) {
-          newTab = loadTab(newTab);
+        if (targetTab) {
+          targetTab.focus();
         }
-        layout = Algorithm.removeFromLayout(layout, tab); // remove old tab
-        panelData = Algorithm.getUpdatedObject(panelData); // panelData might change during removeTab
-        layout = Algorithm.addTabToPanel(layout, newTab, panelData, idx); // add new tab
-        panelData = Algorithm.getUpdatedObject(panelData); // panelData might change during addTabToPanel
-        if (!makeActive) {
-          // restore the previous activeId
-          panelData.activeId = activeId;
-          this.panelToFocus = panelData.id;
+      },
+      [_ref]
+    );
+
+    const setDropRect: DockContext["setDropRect"] = React.useCallback(
+      (element, direction, source, event, panelSize) => {
+        let dropRect = state.dropRect;
+        if (dropRect) {
+          if (direction === "remove") {
+            if (dropRect.source === source) {
+              setState((prev) => ({ ...prev, dropRect: null }));
+            }
+            return;
+          } else if (
+            dropRect.element === element &&
+            dropRect.direction === direction &&
+            direction !== "float"
+          ) {
+            // skip duplicated update except for float dragging
+            return;
+          }
         }
-      } else if (makeActive && panelData.activeId !== id) {
-        layout = Algorithm.replacePanel(layout, panelData, {...panelData, activeId: id});
-      }
-
-      layout = Algorithm.fixLayoutData(layout, this.props.groups);
-      this.changeLayout(layout, newTab?.id ?? id, 'update');
-      return true;
-    }
-  }
-
-  /** @inheritDoc */
-  navigateToPanel(fromElement?: HTMLElement, direction?: string) {
-    if (!direction) {
-      if (!fromElement) {
-        fromElement = this._ref.querySelector('.dock-tab-active>.dock-tab-btn');
-      }
-      fromElement.focus();
-      return;
-    }
-    let targetTab: HTMLElement;
-    // use panel rect when move left/right, and use tabbar rect for up/down
-    let selector = (direction === 'ArrowUp' || direction === 'ArrowDown') ?
-      '.dock>.dock-bar' : '.dock-box>.dock-panel';
-    let panels = Array.from(this._ref.querySelectorAll(selector));
-
-    let currentPanel = panels.find((panel) => panel.contains(fromElement));
-    let currentRect = currentPanel.getBoundingClientRect();
-    let matches: any[] = [];
-    for (let panel of panels) {
-      if (panel !== currentPanel) {
-        let rect = panel.getBoundingClientRect();
-        let distance = Algorithm.findNearestPanel(currentRect, rect, direction);
-        if (distance >= 0) {
-          matches.push({panel, rect, distance});
+        if (!element) {
+          setState((prev) => ({ ...prev, dropRect: null }));
+          return;
         }
-      }
-    }
-    matches.sort((a, b) => a.distance - b.distance);
-    for (let match of matches) {
-      targetTab = match.panel.querySelector('.dock-tab-active>.dock-tab-btn');
-      if (targetTab) {
-        break;
-      }
-    }
+        let layoutRect = _ref.getBoundingClientRect();
+        let scaleX = _ref.offsetWidth / layoutRect.width;
+        let scaleY = _ref.offsetHeight / layoutRect.height;
 
-    if (targetTab) {
-      targetTab.focus();
-    }
-  }
+        let elemRect = element.getBoundingClientRect();
+        let left = (elemRect.left - layoutRect.left) * scaleX;
+        let top = (elemRect.top - layoutRect.top) * scaleY;
+        let width = elemRect.width * scaleX;
+        let height = elemRect.height * scaleY;
 
-  constructor(props: LayoutProps) {
-    super(props);
-    let {layout, defaultLayout, loadTab} = props;
-    let preparedLayout: LayoutData;
-    if (defaultLayout) {
-      preparedLayout = this.prepareInitData(props.defaultLayout);
-    } else if (!loadTab) {
-      throw new Error('DockLayout.loadTab and DockLayout.defaultLayout should not both be undefined.');
-    }
+        let ratio = 0.5;
+        if (element.classList.contains("dock-box")) {
+          ratio = 0.3;
+        }
+        switch (direction) {
+          case "float": {
+            let x = (event.clientX - layoutRect.left) * scaleX;
+            let y = (event.clientY - layoutRect.top) * scaleY;
+            top = y - 15;
+            width = panelSize[0];
+            height = panelSize[1];
+            left = x - (width >> 1);
+            break;
+          }
+          case "right":
+            left += width * (1 - ratio);
+          case "left": // tslint:disable-line no-switch-case-fall-through
+            width *= ratio;
+            break;
+          case "bottom":
+            top += height * (1 - ratio);
+          case "top": // tslint:disable-line no-switch-case-fall-through
+            height *= ratio;
+            break;
+          case "after-tab":
+            left += width - 15;
+            width = 30;
+            break;
+          case "before-tab":
+            left -= 15;
+            width = 30;
+            break;
+        }
 
-    if (layout) {
-      // controlled layout
-      this.state = {
-        layout: DockLayout.loadLayoutData(layout, props),
-        dropRect: null,
+        setState((prev) => ({
+          ...prev,
+          dropRect: { left, top, width, height, element, source, direction },
+        }));
+      },
+      [state.dropRect, _ref]
+    );
+
+    const onSilentChange: DockContext["onSilentChange"] = React.useCallback(
+      (currentTabId = null, direction) => {
+        if (onLayoutChange) {
+          changeLayout(getLayout(), currentTabId, direction, true);
+        }
+      },
+      [onLayoutChange, getLayout, changeLayout]
+    );
+
+    const value: DockContext = React.useMemo(
+      () => ({
+        getDockId,
+        getGroup,
+        getRootElement,
+        find,
+        dockMove,
+        getLayoutSize,
+        updateTab,
+        navigateToPanel,
+        useEdgeDrop,
+        setDropRect,
+        onSilentChange,
+      }),
+      [
+        getDockId,
+        getGroup,
+        getRootElement,
+        find,
+        dockMove,
+        getLayoutSize,
+        updateTab,
+        navigateToPanel,
+        useEdgeDrop,
+        setDropRect,
+        onSilentChange,
+      ]
+    );
+
+    React.useEffect(() => {
+      const _onWindowResize: any = debounce(() => {
+        let layout = getLayout();
+
+        if (_ref) {
+          let newLayout = Algorithm.fixFloatPanelPos(
+            layout,
+            _ref.offsetWidth,
+            _ref.offsetHeight
+          );
+          if (layout !== newLayout) {
+            newLayout = Algorithm.fixLayoutData(newLayout, groups); // panel parent might need a fix
+            changeLayout(newLayout, null, "move");
+          }
+        }
+      }, 200);
+
+      globalThis.addEventListener?.("resize", _onWindowResize);
+
+      return () => {
+        globalThis.removeEventListener?.("resize", _onWindowResize);
+        _onWindowResize.cancel();
       };
-    } else {
-      this.state = {
-        layout: preparedLayout,
-        dropRect: null,
-      };
-    }
+    }, [getLayout, _ref, groups, changeLayout]);
 
-    DragManager.addDragStateListener(this.onDragStateChange);
-    globalThis.addEventListener?.('resize', this._onWindowResize);
-  }
-
-  /** @ignore */
-  onDragStateChange = (draggingScope: any) => {
-    if (draggingScope == null) {
-      DroppingPanel.droppingPanel = null;
-      if (this.state.dropRect) {
-        this.setState({dropRect: null});
-      }
-    }
-  };
-
-  /** @ignore */
-  useEdgeDrop() {
-    return this.props.dropMode === 'edge';
-  }
-
-  /** @ignore */
-  setDropRect(element: HTMLElement, direction?: DropDirection, source?: any, event?: {clientX: number, clientY: number}, panelSize: [number, number] = [300, 300]) {
-    let {dropRect} = this.state;
-    if (dropRect) {
-      if (direction === 'remove') {
-        if (dropRect.source === source) {
-          this.setState({dropRect: null});
+    React.useEffect(() => {
+      const onDragStateChange = (draggingScope: any) => {
+        if (draggingScope == null) {
+          DroppingPanel.droppingPanel = null;
+          if (state.dropRect) {
+            setState((prev) => ({ ...prev, dropRect: null }));
+          }
         }
-        return;
-      } else if (dropRect.element === element && dropRect.direction === direction && direction !== 'float') {
-        // skip duplicated update except for float dragging
-        return;
+      };
+
+      DragManager.addDragStateListener(onDragStateChange);
+
+      return () => {
+        DragManager.removeDragStateListener(onDragStateChange);
+      };
+    }, [state.dropRect]);
+
+    React.useEffect(() => {
+      // componentDidUpdate
+      /** @ignore
+       * move focus to panelToFocus
+       */
+      if (panelToFocus.current) {
+        let panel = _ref.querySelector(
+          `.dock-panel[data-dockid="${panelToFocus.current}"]`
+        ) as HTMLElement;
+        if (panel && !panel.contains(_ref.ownerDocument.activeElement)) {
+          (panel.querySelector(".dock-bar") as HTMLElement)?.focus();
+        }
+        panelToFocus.current = null;
       }
-    }
-    if (!element) {
-      this.setState({dropRect: null});
-      return;
-    }
-    let layoutRect = this._ref.getBoundingClientRect();
-    let scaleX = this._ref.offsetWidth / layoutRect.width;
-    let scaleY = this._ref.offsetHeight / layoutRect.height;
+    });
 
-    let elemRect = element.getBoundingClientRect();
-    let left = (elemRect.left - layoutRect.left) * scaleX;
-    let top = (elemRect.top - layoutRect.top) * scaleY;
-    let width = elemRect.width * scaleX;
-    let height = elemRect.height * scaleY;
+    /**
+     * load layout
+     * calling this api won't trigger the [[LayoutProps.onLayoutChange]] callback
+     */
+    const loadLayout = React.useCallback(
+      (savedLayout: LayoutBase) => {
+        setLayout(
+          loadLayoutData(
+            savedLayout,
+            props,
+            _ref.offsetWidth,
+            _ref.offsetHeight
+          )
+        );
+      },
+      [props, _ref]
+    );
 
-    let ratio = 0.5;
-    if (element.classList.contains('dock-box')) {
-      ratio = 0.3;
-    }
-    switch (direction) {
-      case 'float': {
-        let x = (event.clientX - layoutRect.left) * scaleX;
-        let y = (event.clientY - layoutRect.top) * scaleY;
-        top = y - 15;
-        width = panelSize[0];
-        height = panelSize[1];
-        left = x - (width >> 1);
-        break;
-      }
-      case 'right':
-        left += width * (1 - ratio);
-      case 'left': // tslint:disable-line no-switch-case-fall-through
-        width *= ratio;
-        break;
-      case 'bottom':
-        top += height * (1 - ratio);
-      case 'top': // tslint:disable-line no-switch-case-fall-through
-        height *= ratio;
-        break;
-      case 'after-tab':
-        left += width - 15;
-        width = 30;
-        break;
-      case 'before-tab':
-        left -= 15;
-        width = 30;
-        break;
-    }
+    const saveLayout = React.useCallback((): LayoutBase => {
+      return Serializer.saveLayoutData(
+        getLayout(),
+        props.saveTab,
+        props.afterPanelSaved
+      );
+    }, [getLayout, props.saveTab, props.afterPanelSaved]);
 
-    this.setState({dropRect: {left, top, width, height, element, source, direction}});
-  }
+    //public api
+    React.useImperativeHandle(
+      ref,
+      React.useCallback(
+        () => ({
+          dockMove,
+          find,
+          loadLayout,
+          saveLayout,
+          updateTab,
+        }),
+        [dockMove, find, loadLayout, saveLayout, updateTab]
+      )
+    );
 
-  /** @ignore */
-  render(): React.ReactNode {
+    // render
     // clear tempLayout
-    this.tempLayout = null;
+    tempLayout.current = null;
 
-    let {style, maximizeTo} = this.props;
-    let {layout, dropRect} = this.state;
     let dropRectStyle: React.CSSProperties;
-    if (dropRect) {
-      let {element, direction, ...rect} = dropRect;
-      dropRectStyle = {...rect, display: 'block'};
-      if (direction === 'float') {
-        dropRectStyle.transition = 'none';
+    if (state.dropRect) {
+      let { element, direction, ...rect } = state.dropRect;
+      dropRectStyle = { ...rect, display: "block" };
+      if (direction === "float") {
+        dropRectStyle.transition = "none";
       }
     }
     let maximize: React.ReactNode;
     // if (layout.maxbox && layout.maxbox.children.length === 1) {
     if (maximizeTo) {
-      if (typeof maximizeTo === 'string') {
+      if (typeof maximizeTo === "string") {
         maximizeTo = document.getElementById(maximizeTo);
       }
       maximize = ReactDOM.createPortal(
-        <MaxBox boxData={layout.maxbox}/>,
+        <MaxBox boxData={state.layout.maxbox} />,
         maximizeTo
       );
     } else {
-      maximize = <MaxBox boxData={layout.maxbox}/>;
-    }
-    // }
-
-    let portals: React.ReactPortal[] = [];
-    for (let [key, cache] of this._caches) {
-      if (cache.portal) {
-        portals.push(cache.portal);
-      }
+      maximize = <MaxBox boxData={state.layout.maxbox} />;
     }
 
     return (
-      <div ref={this.getRef} className="dock-layout" style={style}>
-        <DockContextProvider value={this}>
-          <DockBox size={1} boxData={layout.dockbox}/>
-          <FloatBox boxData={layout.floatbox}/>
-          <WindowBox boxData={layout.windowbox}/>
-          {maximize}
-          {portals}
+      <div ref={setRef} className="dock-layout" style={style}>
+        <DockContextProvider value={value}>
+          <DockPortalManager>
+            <DockBox size={1} boxData={state.layout.dockbox} />
+            <FloatBox boxData={state.layout.floatbox} />
+            <WindowBox boxData={state.layout.windowbox} />
+            {maximize}
+          </DockPortalManager>
         </DockContextProvider>
-        <div className="dock-drop-indicator" style={dropRectStyle}/>
+        <div className="dock-drop-indicator" style={dropRectStyle} />
       </div>
     );
   }
+);
 
-  _onWindowResize: any = debounce(() => {
-    let layout = this.getLayout();
+export const DockLayout = React.memo(DockLayoutBase);
 
-    if (this._ref) {
-      let newLayout = Algorithm.fixFloatPanelPos(layout, this._ref.offsetWidth, this._ref.offsetHeight);
-      if (layout !== newLayout) {
-        newLayout = Algorithm.fixLayoutData(newLayout, this.props.groups); // panel parent might need a fix
-        this.changeLayout(newLayout, null, 'move');
-      }
-    }
-  }, 200);
+function prepareInitData(
+  data: LayoutData,
+  groups: LayoutProps["groups"],
+  loadTab: LayoutProps["loadTab"]
+): LayoutData {
+  let _layout = { ...data };
+  Algorithm.fixLayoutData(_layout, groups, loadTab);
+  return _layout;
+}
 
-
-  /** @ignore */
-  panelToFocus: string;
-
-  /** @ignore */
-  componentDidMount() {
-    this._isMounted = true;
-  }
-
-  /** @ignore
-   * move focus to panelToFocus
-   */
-  componentDidUpdate(prevProps: Readonly<LayoutProps>, prevState: Readonly<LayoutState>, snapshot?: any) {
-    if (this.panelToFocus) {
-      let panel = this._ref.querySelector(`.dock-panel[data-dockid="${this.panelToFocus}"]`) as HTMLElement;
-      if (panel && !panel.contains(this._ref.ownerDocument.activeElement)) {
-        (panel.querySelector('.dock-bar') as HTMLElement)?.focus();
-      }
-      this.panelToFocus = null;
-    }
-  }
-
-  /** @ignore */
-  componentWillUnmount(): void {
-    globalThis.removeEventListener?.('resize', this._onWindowResize);
-    DragManager.removeDragStateListener(this.onDragStateChange);
-    this._onWindowResize.cancel();
-    this._isMounted = false;
-  }
-
-  /** @ignore
-   * layout state doesn't change instantly after setState, use this to make sure the correct layout is
-   */
-  tempLayout: LayoutData;
-
-  setLayout(layout: LayoutData) {
-    this.tempLayout = layout;
-    this.setState({layout});
-  }
-
-  getLayout() {
-    return this.tempLayout || this.state.layout;
-  }
-
-  /** @ignore
-   * change layout
-   */
-  changeLayout(layoutData: LayoutData, currentTabId: string, direction: DropDirection, silent: boolean = false) {
-    let {layout, onLayoutChange} = this.props;
-    let savedLayout: LayoutBase;
-    if (onLayoutChange) {
-      savedLayout = Serializer.saveLayoutData(layoutData, this.props.saveTab, this.props.afterPanelSaved);
-      layoutData.loadedFrom = savedLayout;
-      onLayoutChange(savedLayout, currentTabId, direction);
-      if (layout) {
-        // if layout prop is defined, we need to force an update to make sure it's either updated or reverted back
-        this.forceUpdate();
-      }
-    }
-    if (!layout && !silent) {
-      // uncontrolled layout when Props.layout is not defined
-      this.setLayout(layoutData);
-    }
-  }
-
-  /** @ignore
-   * some layout change were handled by component silently
-   * but they should still call this function to trigger onLayoutChange
-   */
-  onSilentChange(currentTabId: string = null, direction?: DropDirection) {
-    let {onLayoutChange} = this.props;
-    if (onLayoutChange) {
-      let layout = this.getLayout();
-      this.changeLayout(layout, currentTabId, direction, true);
-    }
-  }
-
-  // public api
-
-  saveLayout(): LayoutBase {
-    return Serializer.saveLayoutData(this.getLayout(), this.props.saveTab, this.props.afterPanelSaved);
-  }
-
-  /**
-   * load layout
-   * calling this api won't trigger the [[LayoutProps.onLayoutChange]] callback
-   */
-  loadLayout(savedLayout: LayoutBase) {
-    this.setLayout(DockLayout.loadLayoutData(savedLayout, this.props, this._ref.offsetWidth, this._ref.offsetHeight));
-  }
-
-  /** @ignore */
-  static loadLayoutData(savedLayout: LayoutBase, props: LayoutProps, width = 0, height = 0): LayoutData {
-    let {defaultLayout, loadTab, afterPanelLoaded, groups} = props;
-    let layout = Serializer.loadLayoutData(
-      savedLayout,
-      defaultLayout,
-      loadTab,
-      afterPanelLoaded
-    );
-    layout = Algorithm.fixFloatPanelPos(layout, width, height);
-    layout = Algorithm.fixLayoutData(layout, groups);
-    layout.loadedFrom = savedLayout;
-    return layout;
-  }
-
-  static getDerivedStateFromProps(props: LayoutProps, state: LayoutState) {
-    let {layout: layoutToLoad} = props;
-    let {layout: currentLayout} = state;
-    if (layoutToLoad && layoutToLoad !== currentLayout.loadedFrom) {
-      // auto reload on layout prop change
-      return {
-        layout: DockLayout.loadLayoutData(layoutToLoad, props),
-      };
-    }
-    return null;
-  }
+function loadLayoutData(
+  savedLayout: LayoutBase,
+  props: LayoutProps,
+  width = 0,
+  height = 0
+): LayoutData {
+  let { defaultLayout, loadTab, afterPanelLoaded, groups } = props;
+  let layout = Serializer.loadLayoutData(
+    savedLayout,
+    defaultLayout,
+    loadTab,
+    afterPanelLoaded
+  );
+  layout = Algorithm.fixFloatPanelPos(layout, width, height);
+  layout = Algorithm.fixLayoutData(layout, groups);
+  layout.loadedFrom = savedLayout;
+  return layout;
 }
