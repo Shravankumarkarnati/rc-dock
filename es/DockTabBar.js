@@ -10,18 +10,18 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 import * as React from "react";
+import { useDockContext } from "./DockData";
 import { DragDropDiv } from "./dragdrop/DragDropDiv";
-import { DockContextType } from "./DockData";
 /**
  * @return returns true if navigation is handled in local tab move, otherwise returns false
  */
 function checkLocalTabMove(key, tabbar) {
-    if (key === 'ArrowLeft' || key === 'ArrowRight') {
-        let tabs = Array.from(tabbar.querySelectorAll('.dock-tab-btn'));
-        let activeTab = tabbar.querySelector('.dock-tab-active>.dock-tab-btn');
+    if (key === "ArrowLeft" || key === "ArrowRight") {
+        let tabs = Array.from(tabbar.querySelectorAll(".dock-tab-btn"));
+        let activeTab = tabbar.querySelector(".dock-tab-active>.dock-tab-btn");
         let i = tabs.indexOf(activeTab);
         if (i >= 0) {
-            if (key === 'ArrowLeft') {
+            if (key === "ArrowLeft") {
                 if (i > 0) {
                     tabs[i - 1].click();
                     tabs[i - 1].focus();
@@ -39,17 +39,17 @@ function checkLocalTabMove(key, tabbar) {
     }
     return false;
 }
-export function DockTabBar(props) {
+export const DockTabBar = (props) => {
     const { onDragStart, onDragMove, onDragEnd, TabNavList, isMaximized } = props, restProps = __rest(props, ["onDragStart", "onDragMove", "onDragEnd", "TabNavList", "isMaximized"]);
-    const layout = React.useContext(DockContextType);
+    const context = useDockContext();
     const ref = React.useRef();
     const getRef = (div) => {
         ref.current = div;
     };
     const onKeyDown = (e) => {
-        if (e.key.startsWith('Arrow')) {
+        if (e.key.startsWith("Arrow")) {
             if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
-                layout.navigateToPanel(ref.current, e.key);
+                context.navigateToPanel(ref.current, e.key);
             }
             e.stopPropagation();
             e.preventDefault();
@@ -57,4 +57,4 @@ export function DockTabBar(props) {
     };
     return (React.createElement(DragDropDiv, { onDragStartT: onDragStart, onDragMoveT: onDragMove, onDragEndT: onDragEnd, role: "tablist", className: "dock-bar", onKeyDown: onKeyDown, getRef: getRef, tabIndex: -1 },
         React.createElement(TabNavList, Object.assign({}, restProps))));
-}
+};
