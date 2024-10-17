@@ -275,15 +275,13 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
         </Menu>
       );
 
-      const trigger = showWithLeftClick
-        ? ["contextMenu", "click"]
-        : ["contextMenu"];
-
       return (
         <Dropdown
           prefixCls="dock-dropdown"
           overlay={nativeMenu}
-          trigger={trigger}
+          trigger={
+            showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
+          }
           mouseEnterDelay={0.1}
           mouseLeaveDelay={0.1}
         >

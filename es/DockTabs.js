@@ -209,10 +209,7 @@ export const DockTabs = React.memo(function DockTabBase(props) {
         const onNewWindowClick = () => context.dockMove(panelData, null, "new-window");
         const nativeMenu = (React.createElement(Menu, { onClick: onNewWindowClick },
             React.createElement(MenuItem, null, "New Window")));
-        const trigger = showWithLeftClick
-            ? ["contextMenu", "click"]
-            : ["contextMenu"];
-        return (React.createElement(Dropdown, { prefixCls: "dock-dropdown", overlay: nativeMenu, trigger: trigger, mouseEnterDelay: 0.1, mouseLeaveDelay: 0.1 }, element));
+        return (React.createElement(Dropdown, { prefixCls: "dock-dropdown", overlay: nativeMenu, trigger: showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"], mouseEnterDelay: 0.1, mouseLeaveDelay: 0.1 }, element));
     }, [context, panelData]);
     const renderTabBar = React.useCallback((props, TabNavList) => {
         const { panelLock } = panelData;
