@@ -46,7 +46,7 @@ export const DockTabBar = (props) => {
     const getRef = (div) => {
         ref.current = div;
     };
-    const onKeyDown = (e) => {
+    const onKeyDown = React.useCallback((e) => {
         if (e.key.startsWith("Arrow")) {
             if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
                 context.navigateToPanel(ref.current, e.key);
@@ -54,7 +54,7 @@ export const DockTabBar = (props) => {
             e.stopPropagation();
             e.preventDefault();
         }
-    };
+    }, [context, isMaximized]);
     return (React.createElement(DragDropDiv, { onDragStartT: onDragStart, onDragMoveT: onDragMove, onDragEndT: onDragEnd, role: "tablist", className: "dock-bar", onKeyDown: onKeyDown, getRef: getRef, tabIndex: -1 },
         React.createElement(TabNavList, Object.assign({}, restProps))));
 };

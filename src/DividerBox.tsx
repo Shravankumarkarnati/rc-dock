@@ -44,7 +44,7 @@ export const DividerBox = React.memo(function DividerBoxBase(props: Props) {
         afterDivider: dividerChildren.slice(idx),
       };
     },
-    [ref, children]
+    [ref, children, mode]
   );
 
   const changeSizes = React.useCallback(

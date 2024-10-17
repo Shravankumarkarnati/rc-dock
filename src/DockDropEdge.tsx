@@ -162,15 +162,14 @@ export const DockDropEdge = React.memo(function DockDropEdgeBase(
       e.accept("");
     },
     [
-      panelData,
-      panelElement,
-      dropFromPanel,
-      context.getDockId,
-      context.getGroup,
-      context.setDropRect,
-      getDirection,
-      getActualDepth,
       _ref,
+      context,
+      dropFromPanel.group,
+      dropFromPanel.panelLock,
+      getDirection,
+      panelData,
+      getActualDepth,
+      panelElement,
     ]
   );
 
@@ -179,7 +178,7 @@ export const DockDropEdge = React.memo(function DockDropEdgeBase(
       if (!_ref) return;
       context.setDropRect(null, "remove", _ref);
     },
-    [context.setDropRect, _ref]
+    [_ref, context]
   );
 
   const onDrop = React.useCallback(
@@ -209,15 +208,7 @@ export const DockDropEdge = React.memo(function DockDropEdgeBase(
         context.dockMove(source, target, direction);
       }
     },
-    [
-      panelData,
-      dropFromPanel,
-      context.getDockId,
-      context.getGroup,
-      getDirection,
-      getActualDepth,
-      context.dockMove,
-    ]
+    [context, dropFromPanel.group, getDirection, panelData, getActualDepth]
   );
 
   return (

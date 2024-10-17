@@ -29,13 +29,13 @@ export const DockDropSquare = React.memo(function DockDropSquareBase(props) {
             context.setDropRect(_targetElement, direction, ref, e, panelSize);
         }
         e.accept("");
-    }, [ref, depth, targetElement, panelData.group, context.setDropRect, dockId]);
+    }, [ref, targetElement, panelData.group, direction, depth, context, dockId]);
     const onDragLeave = React.useCallback((e) => {
         if (!ref)
             return;
         setState({ dropping: false });
         context.setDropRect(null, "remove", ref);
-    }, [ref, context.setDropRect]);
+    }, [ref, context]);
     const onDrop = React.useCallback((e) => {
         let source = DragState.getData("tab", dockId);
         if (!source) {
@@ -48,7 +48,7 @@ export const DockDropSquare = React.memo(function DockDropSquareBase(props) {
             }
             context.dockMove(source, target, direction);
         }
-    }, [dockId, context.dockMove, panelData, depth, direction]);
+    }, [dockId, panelData, context, direction, depth]);
     React.useEffect(() => {
         return () => {
             if (ref) {

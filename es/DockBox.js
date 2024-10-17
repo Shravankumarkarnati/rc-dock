@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useDockContext, } from "./DockData";
 import { Divider } from "./Divider";
+import { useDockContext } from "./DockData";
 import { DockPanel } from "./DockPanel";
 import { useForceUpdate } from "./UseForceUpdate";
 export const DockBox = React.memo(function DockBoxBase(props) {
@@ -52,7 +52,7 @@ export const DockBox = React.memo(function DockBoxBase(props) {
     }, [children, forceUpdate]);
     const onDragEnd = React.useCallback(() => {
         context.onSilentChange(null, "move");
-    }, [context.onSilentChange]);
+    }, [context]);
     let isVertical = mode === "vertical";
     let childrenRender = [];
     for (let i = 0; i < children.length; ++i) {

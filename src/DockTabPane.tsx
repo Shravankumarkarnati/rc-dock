@@ -45,7 +45,7 @@ const DockTabPane = React.memo(function DockTabPaneBase(
       }
       setRefBase(_ref);
     },
-    [context.getTabCache, context.updateTabCache, children, cacheId]
+    [context, cacheId, children]
   );
 
   React.useEffect(() => {
@@ -62,14 +62,7 @@ const DockTabPane = React.memo(function DockTabPaneBase(
         context.updateTabCache(_cache.current.id, children);
       }
     }
-  }, [
-    cached,
-    children,
-    cacheId,
-    context.updateTabCache,
-    context.removeTabCache,
-    context.getTabCache,
-  ]);
+  }, [cached, children, cacheId, ref, context]);
 
   React.useEffect(() => {
     // componentWillUnmount

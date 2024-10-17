@@ -122,7 +122,7 @@ export const DockPanel = React.memo(function DockPanelBase(props: Props) {
       }
       setState((prev) => ({ ...prev, draggingHeader: true }));
     },
-    [panelData, dockId, onFloatPointerDown, context.getGroup]
+    [panelData, dockId, onFloatPointerDown, context, _ref]
   );
 
   const onPanelHeaderDragMove = React.useCallback(
@@ -148,7 +148,7 @@ export const DockPanel = React.memo(function DockPanelBase(props: Props) {
       }
       forceUpdate();
     },
-    [panelData, forceUpdate, context.getLayoutSize]
+    [panelData, context, forceUpdate]
   );
 
   const onPanelHeaderDragEnd = React.useCallback(
@@ -161,7 +161,7 @@ export const DockPanel = React.memo(function DockPanelBase(props: Props) {
         }
       }
     },
-    [panelData, context.onSilentChange]
+    [panelData.parent?.mode, panelData.activeId, context]
   );
 
   const onPanelCornerDrag = React.useCallback(
@@ -292,14 +292,14 @@ export const DockPanel = React.memo(function DockPanelBase(props: Props) {
 
       forceUpdate();
     },
-    [panelData, forceUpdate, context.getLayoutSize]
+    [panelData, forceUpdate, context]
   );
 
   const onPanelCornerDragEnd = React.useCallback(
     (e: DragState) => {
       context.onSilentChange(panelData.activeId, "move");
     },
-    [panelData.activeId, context.onSilentChange]
+    [context, panelData.activeId]
   );
 
   const onPanelClicked = React.useCallback(

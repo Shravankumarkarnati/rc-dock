@@ -56,15 +56,18 @@ export const DockTabBar = (props: DockTabBarProps) => {
     ref.current = div;
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key.startsWith("Arrow")) {
-      if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
-        context.navigateToPanel(ref.current, e.key);
+  const onKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key.startsWith("Arrow")) {
+        if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
+          context.navigateToPanel(ref.current, e.key);
+        }
+        e.stopPropagation();
+        e.preventDefault();
       }
-      e.stopPropagation();
-      e.preventDefault();
-    }
-  };
+    },
+    [context, isMaximized]
+  );
 
   return (
     <DragDropDiv

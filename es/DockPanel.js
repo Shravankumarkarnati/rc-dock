@@ -11,6 +11,7 @@ import { DroppingPanel } from "./DroppingPanel";
 import { useForceUpdate } from "./UseForceUpdate";
 import { groupClassNames } from "./Utils";
 export const DockPanel = React.memo(function DockPanelBase(props) {
+    var _a;
     const context = useDockContext();
     const forceUpdate = useForceUpdate();
     const [_ref, setRef] = React.useState(null);
@@ -81,7 +82,7 @@ export const DockPanel = React.memo(function DockPanelBase(props) {
             event.startDrag(null);
         }
         setState((prev) => (Object.assign(Object.assign({}, prev), { draggingHeader: true })));
-    }, [panelData, dockId, onFloatPointerDown, context.getGroup]);
+    }, [panelData, dockId, onFloatPointerDown, context, _ref]);
     const onPanelHeaderDragMove = React.useCallback((e) => {
         var _a;
         if (((_a = panelData.parent) === null || _a === void 0 ? void 0 : _a.mode) !== "float") {
@@ -105,7 +106,7 @@ export const DockPanel = React.memo(function DockPanelBase(props) {
             }
         }
         forceUpdate();
-    }, [panelData, forceUpdate, context.getLayoutSize]);
+    }, [panelData, context, forceUpdate]);
     const onPanelHeaderDragEnd = React.useCallback((e) => {
         var _a;
         setState((prev) => (Object.assign(Object.assign({}, prev), { draggingHeader: false })));
@@ -115,7 +116,7 @@ export const DockPanel = React.memo(function DockPanelBase(props) {
                 context.onSilentChange(panelData.activeId, "move");
             }
         }
-    }, [panelData, context.onSilentChange]);
+    }, [(_a = panelData.parent) === null || _a === void 0 ? void 0 : _a.mode, panelData.activeId, context]);
     const onPanelCornerDrag = React.useCallback((e, corner) => {
         let { parent, x, y, w, h } = panelData;
         if ((parent === null || parent === void 0 ? void 0 : parent.mode) === "float") {
@@ -210,10 +211,10 @@ export const DockPanel = React.memo(function DockPanelBase(props) {
         panelData.w = Math.max(panelData.w || 0, panelData.minWidth || 0);
         panelData.h = Math.max(panelData.h || 0, panelData.minHeight || 0);
         forceUpdate();
-    }, [panelData, forceUpdate, context.getLayoutSize]);
+    }, [panelData, forceUpdate, context]);
     const onPanelCornerDragEnd = React.useCallback((e) => {
         context.onSilentChange(panelData.activeId, "move");
-    }, [panelData.activeId, context.onSilentChange]);
+    }, [context, panelData.activeId]);
     const onPanelClicked = React.useCallback((e) => {
         const target = e.nativeEvent.target;
         if (!_ref.contains(_ref.ownerDocument.activeElement) &&

@@ -7,7 +7,7 @@ interface Props {
 }
 
 export const MaxBox = React.memo(function MaxBoxBase({ boxData }: Props) {
-  let panelData = boxData.children[0] as PanelData;
+  const panelData = boxData.children[0] as PanelData;
   let hidePanelData: PanelData;
 
   if (panelData) {
@@ -19,7 +19,7 @@ export const MaxBox = React.memo(function MaxBoxBase({ boxData }: Props) {
     );
   } else if (hidePanelData) {
     // use the hiden data only once, dont keep it for too long
-    let _hidePanelData = hidePanelData;
+    const _hidePanelData = hidePanelData;
     hidePanelData = null;
     return (
       <div className="dock-box dock-mbox dock-mbox-hide">

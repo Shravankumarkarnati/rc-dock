@@ -7,10 +7,10 @@ interface Props {
 }
 
 export const FloatBox = React.memo(function FloatBoxBase({ boxData }: Props) {
-  let { children } = boxData;
+  const { children } = boxData;
 
-  let childrenRender: React.ReactNode[] = [];
-  for (let child of children) {
+  const childrenRender: React.ReactNode[] = [];
+  for (const child of children) {
     if ("tabs" in child) {
       childrenRender.push(
         <DockPanel size={child.size} panelData={child} key={child.id} />

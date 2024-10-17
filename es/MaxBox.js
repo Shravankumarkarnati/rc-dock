@@ -1,7 +1,7 @@
 import * as React from "react";
 import { DockPanel } from "./DockPanel";
 export const MaxBox = React.memo(function MaxBoxBase({ boxData }) {
-    let panelData = boxData.children[0];
+    const panelData = boxData.children[0];
     let hidePanelData;
     if (panelData) {
         hidePanelData = Object.assign(Object.assign({}, panelData), { id: "", tabs: [] });
@@ -10,7 +10,7 @@ export const MaxBox = React.memo(function MaxBoxBase({ boxData }) {
     }
     else if (hidePanelData) {
         // use the hiden data only once, dont keep it for too long
-        let _hidePanelData = hidePanelData;
+        const _hidePanelData = hidePanelData;
         hidePanelData = null;
         return (React.createElement("div", { className: "dock-box dock-mbox dock-mbox-hide" },
             React.createElement(DockPanel, { size: 100, panelData: _hidePanelData })));

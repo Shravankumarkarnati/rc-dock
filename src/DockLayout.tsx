@@ -599,16 +599,18 @@ const DockLayoutBase = React.forwardRef<DockRef, LayoutProps>(
      */
     const loadLayout = React.useCallback(
       (savedLayout: LayoutBase) => {
-        setLayout(
-          loadLayoutData(
-            savedLayout,
-            props,
-            _ref.offsetWidth,
-            _ref.offsetHeight
-          )
-        );
+        if (_ref) {
+          setLayout(
+            loadLayoutData(
+              savedLayout,
+              props,
+              _ref.offsetWidth,
+              _ref.offsetHeight
+            )
+          );
+        }
       },
-      [props, _ref]
+      [setLayout, props, _ref]
     );
 
     const saveLayout = React.useCallback((): LayoutBase => {

@@ -7,10 +7,10 @@ interface Props {
 }
 
 export const WindowBox = React.memo(function WindowBoxBase({ boxData }: Props) {
-  let { children } = boxData;
+  const { children } = boxData;
 
-  let childrenRender: React.ReactNode[] = [];
-  for (let child of children) {
+  const childrenRender: React.ReactNode[] = [];
+  for (const child of children) {
     if ("tabs" in child) {
       childrenRender.push(<WindowPanel key={child.id} panelData={child} />);
     }

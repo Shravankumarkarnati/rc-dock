@@ -8,13 +8,13 @@ import { PanelData, useDockContext } from "./DockData";
 import { DockPanel } from "./DockPanel";
 
 interface Props {
-  panelData: PanelData;
+  readonly panelData: PanelData;
 }
 
 export const WindowPanel = React.memo(function WindowPanelBase({
   panelData,
 }: Props) {
-  const context = useDockContext();
+  const { dockMove, getRootElement } = useDockContext();
 
   const _window = React.useRef<Window | null>(null);
 
@@ -25,7 +25,7 @@ export const WindowPanel = React.memo(function WindowPanelBase({
   }, []);
 
   const onUnload = React.useCallback(() => {
-    let layoutRoot = context.getRootElement();
+    const layoutRoot = getRootElement();
     const rect = mapWindowToElement(layoutRoot, _window.current);
     if (rect.width > 0 && rect.height > 0) {
       panelData.x = rect.left;
@@ -33,17 +33,17 @@ export const WindowPanel = React.memo(function WindowPanelBase({
       panelData.w = rect.width;
       panelData.h = rect.height;
     }
-    context.dockMove(panelData, null, "float");
-  }, [panelData, context.getRootElement, context.dockMove]);
+    dockMove(panelData, null, "float");
+  }, [panelData, getRootElement, dockMove]);
 
   const initPopupInnerRect = React.useCallback(() => {
-    return mapElementToScreenRect(context.getRootElement(), {
+    return mapElementToScreenRect(getRootElement(), {
       left: panelData.x,
       top: panelData.y,
       width: panelData.w,
       height: panelData.h,
-    }) as any;
-  }, [context.getRootElement, panelData]);
+    });
+  }, [getRootElement, panelData]);
 
   return (
     <NewWindow

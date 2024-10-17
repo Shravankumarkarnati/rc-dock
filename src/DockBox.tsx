@@ -1,11 +1,6 @@
 import * as React from "react";
-import {
-  BoxData,
-  DockContext,
-  DockContextType,
-  useDockContext,
-} from "./DockData";
 import { Divider, DividerChild } from "./Divider";
+import { BoxData, useDockContext } from "./DockData";
 import { DockPanel } from "./DockPanel";
 import { useForceUpdate } from "./UseForceUpdate";
 
@@ -75,7 +70,7 @@ export const DockBox = React.memo(function DockBoxBase(props: Props) {
 
   const onDragEnd = React.useCallback(() => {
     context.onSilentChange(null, "move");
-  }, [context.onSilentChange]);
+  }, [context]);
 
   let isVertical = mode === "vertical";
   let childrenRender: React.ReactNode[] = [];

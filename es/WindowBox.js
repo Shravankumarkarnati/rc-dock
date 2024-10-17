@@ -1,9 +1,9 @@
 import * as React from "react";
 import { WindowPanel } from "./WindowPanel";
 export const WindowBox = React.memo(function WindowBoxBase({ boxData }) {
-    let { children } = boxData;
-    let childrenRender = [];
-    for (let child of children) {
+    const { children } = boxData;
+    const childrenRender = [];
+    for (const child of children) {
         if ("tabs" in child) {
             childrenRender.push(React.createElement(WindowPanel, { key: child.id, panelData: child }));
         }
