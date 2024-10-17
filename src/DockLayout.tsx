@@ -167,11 +167,6 @@ const DockLayoutBase = React.forwardRef<DockRef, LayoutProps>(
       }
     });
 
-    const dropRectRef = React.useRef<LayoutState["dropRect"]>();
-    React.useEffect(() => {
-      dropRectRef.current = state.dropRect;
-    });
-
     /** @ignore
      * layout state doesn't change instantly after setState, use this to make sure the correct layout is
      */
@@ -265,11 +260,11 @@ const DockLayoutBase = React.forwardRef<DockRef, LayoutProps>(
         if (direction === "float") {
           let newPanel = Algorithm.converToPanel(source);
           newPanel.z = Algorithm.nextZIndex(null);
-          if (dropRectRef.current || floatPosition) {
+          if (state.dropRect || floatPosition) {
             layout = Algorithm.floatPanel(
               layout,
               newPanel,
-              dropRectRef.current || floatPosition
+              state.dropRect || floatPosition
             );
           } else {
             layout = Algorithm.floatPanel(layout, newPanel);
@@ -329,7 +324,7 @@ const DockLayoutBase = React.forwardRef<DockRef, LayoutProps>(
           changeLayout(layout, currentTabId, direction);
         }
       },
-      [getLayout, find, _ref, groups, changeLayout]
+      [getLayout, find, _ref, groups, changeLayout, state.dropRect]
     );
 
     const getLayoutSize = React.useCallback((): LayoutSize => {
