@@ -4,7 +4,7 @@ import * as React from "react";
 import { useDockContext } from "./DockData";
 import { DockPanel } from "./DockPanel";
 export const WindowPanel = React.memo(function WindowPanelBase({ panelData, }) {
-    const { dockMove, getRootElement } = useDockContext();
+    const context = useDockContext();
     const _window = React.useRef(null);
     const onOpen = React.useCallback((_w) => {
         if (!_window.current && _w) {
@@ -12,7 +12,7 @@ export const WindowPanel = React.memo(function WindowPanelBase({ panelData, }) {
         }
     }, []);
     const onUnload = React.useCallback(() => {
-        const layoutRoot = getRootElement();
+        const layoutRoot = context.getRootElement();
         const rect = mapWindowToElement(layoutRoot, _window.current);
         if (rect.width > 0 && rect.height > 0) {
             panelData.x = rect.left;
@@ -20,16 +20,16 @@ export const WindowPanel = React.memo(function WindowPanelBase({ panelData, }) {
             panelData.w = rect.width;
             panelData.h = rect.height;
         }
-        dockMove(panelData, null, "float");
-    }, [panelData, getRootElement, dockMove]);
+        context.dockMove(panelData, null, "float");
+    }, [panelData, context]);
     const initPopupInnerRect = React.useCallback(() => {
-        return mapElementToScreenRect(getRootElement(), {
+        return mapElementToScreenRect(context.getRootElement(), {
             left: panelData.x,
             top: panelData.y,
             width: panelData.w,
             height: panelData.h,
         });
-    }, [getRootElement, panelData]);
+    }, [context, panelData]);
     return (React.createElement(NewWindow, { copyStyles: true, onOpen: onOpen, onClose: onUnload, onBlock: onUnload, initPopupInnerRect: initPopupInnerRect, width: panelData.w, height: panelData.h },
         React.createElement("div", { className: "dock-wbox" },
             React.createElement(DockPanel, { size: panelData.size, panelData: panelData, key: panelData.id }))));
