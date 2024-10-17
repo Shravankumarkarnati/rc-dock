@@ -1,43 +1,8 @@
 import classNames from "classnames";
 import * as React from "react";
-import { useDockPortalManager } from "./DockPortalManager";
+import { DockCachedTabPortal } from "./DockPortalManager";
 const DockTabPane = React.memo(function DockTabPaneBase(props) {
-    const context = useDockPortalManager();
-    const [ref, setRefBase] = React.useState(null);
-    const _cache = React.useRef(null);
     const { active, animated, cached, cacheId, children, className, destroyInactiveTabPane, forceRender, id, prefixCls, style, tabKey, } = props;
-    const setRef = React.useCallback((_ref) => {
-        // updateCache - componentDidMount
-        if (_ref) {
-            _cache.current = context.getTabCache(cacheId, _ref);
-            if (!_ref.contains(_cache.current.div)) {
-                _ref.appendChild(_cache.current.div);
-            }
-            context.updateTabCache(_cache.current.id, children);
-        }
-        setRefBase(_ref);
-    }, [context, cacheId, children]);
-    React.useEffect(() => {
-        // updateCache - componentDidUpdate
-        if (!ref)
-            return;
-        if (_cache.current) {
-            if (!cached || cacheId !== _cache.current.id) {
-                context.removeTabCache(_cache.current.id, ref);
-                _cache.current = null;
-            }
-            if (cached) {
-                context.updateTabCache(_cache.current.id, children);
-            }
-        }
-    }, [cached, children, cacheId, ref, context]);
-    React.useEffect(() => {
-        // componentWillUnmount
-        return () => {
-            if (ref && _cache.current.id)
-                context.removeTabCache(_cache.current.id, ref);
-        };
-    }, []);
     let visited = false;
     if (active) {
         visited = true;
@@ -66,7 +31,6 @@ const DockTabPane = React.memo(function DockTabPaneBase(props) {
     else if (isRender || forceRender) {
         renderChildren = children;
     }
-    let getRef = cached ? setRef : null;
-    return (React.createElement("div", { ref: getRef, id: cacheId, role: "tabpanel", "aria-labelledby": id && `${id}-tab-${tabKey}`, "aria-hidden": !active, style: Object.assign(Object.assign({}, mergedStyle), style), className: classNames(`${prefixCls}-tabpane`, active && `${prefixCls}-tabpane-active`, className) }, (active || visited || forceRender) && renderChildren));
+    return (React.createElement(DockCachedTabPortal, { id: cacheId, content: children, cached: cached, role: "tabpanel", "aria-labelledby": id && `${id}-tab-${tabKey}`, "aria-hidden": !active, style: Object.assign(Object.assign({}, mergedStyle), style), className: classNames(`${prefixCls}-tabpane`, active && `${prefixCls}-tabpane-active`, className) }, (active || visited || forceRender) && renderChildren));
 });
 export default DockTabPane;

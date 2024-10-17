@@ -1,8 +1,7 @@
 import classNames from "classnames";
 import { TabPaneProps } from "rc-tabs";
 import * as React from "react";
-import { TabPaneCache, useDockContext } from "./DockData";
-import { useDockPortalManager } from "./DockPortalManager";
+import { DockCachedTabPortal } from "./DockPortalManager";
 
 interface DockTabPaneProps extends TabPaneProps {
   cacheId?: string;
@@ -12,12 +11,6 @@ interface DockTabPaneProps extends TabPaneProps {
 const DockTabPane = React.memo(function DockTabPaneBase(
   props: DockTabPaneProps
 ) {
-  const context = useDockPortalManager();
-
-  const [ref, setRefBase] = React.useState<null | HTMLElement>(null);
-
-  const _cache = React.useRef<null | TabPaneCache>(null);
-
   const {
     active,
     animated,
@@ -32,45 +25,6 @@ const DockTabPane = React.memo(function DockTabPaneBase(
     style,
     tabKey,
   } = props;
-
-  const setRef = React.useCallback(
-    (_ref: HTMLElement | null) => {
-      // updateCache - componentDidMount
-      if (_ref) {
-        _cache.current = context.getTabCache(cacheId, _ref);
-        if (!_ref.contains(_cache.current.div)) {
-          _ref.appendChild(_cache.current.div);
-        }
-        context.updateTabCache(_cache.current.id, children);
-      }
-      setRefBase(_ref);
-    },
-    [context, cacheId, children]
-  );
-
-  React.useEffect(() => {
-    // updateCache - componentDidUpdate
-    if (!ref) return;
-
-    if (_cache.current) {
-      if (!cached || cacheId !== _cache.current.id) {
-        context.removeTabCache(_cache.current.id, ref);
-        _cache.current = null;
-      }
-
-      if (cached) {
-        context.updateTabCache(_cache.current.id, children);
-      }
-    }
-  }, [cached, children, cacheId, ref, context]);
-
-  React.useEffect(() => {
-    // componentWillUnmount
-    return () => {
-      if (ref && _cache.current.id)
-        context.removeTabCache(_cache.current.id, ref);
-    };
-  }, []);
 
   let visited = false;
 
@@ -100,12 +54,11 @@ const DockTabPane = React.memo(function DockTabPaneBase(
     renderChildren = children;
   }
 
-  let getRef = cached ? setRef : null;
-
   return (
-    <div
-      ref={getRef}
+    <DockCachedTabPortal
       id={cacheId}
+      content={children}
+      cached={cached}
       role="tabpanel"
       aria-labelledby={id && `${id}-tab-${tabKey}`}
       aria-hidden={!active}
@@ -117,7 +70,7 @@ const DockTabPane = React.memo(function DockTabPaneBase(
       )}
     >
       {(active || visited || forceRender) && renderChildren}
-    </div>
+    </DockCachedTabPortal>
   );
 });
 
