@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import Dropdown from "rc-dropdown";
 import Menu, { MenuItem } from "rc-menu";
-import Tabs from "rc-tabs";
+import Tabs, { TabsProps } from "rc-tabs";
 import * as React from "react";
 import { getFloatPanelSize } from "./Algorithm";
 import {
@@ -40,6 +40,19 @@ function isPopupDiv(r: HTMLDivElement): boolean {
   );
 }
 
+type Tab = Pick<
+  NonNullable<TabsProps["items"]>[0],
+  | "key"
+  | "forceRender"
+  | "style"
+  | "className"
+  | "destroyInactiveTabPane"
+  | "children"
+  | "label"
+>;
+
+type RenderTabBar = NonNullable<TabsProps["renderTabBar"]>;
+
 export class TabCache {
   _ref: HTMLDivElement;
   getRef = (r: HTMLDivElement) => {
@@ -60,6 +73,7 @@ export class TabCache {
   data: TabData;
   context: DockContext;
   content: React.ReactElement;
+  label: React.ReactNode;
 
   constructor(context: DockContext) {
     this.context = context;
@@ -68,7 +82,7 @@ export class TabCache {
   setData(data: TabData) {
     if (data !== this.data) {
       this.data = data;
-      this.content = this.render();
+      [this.content, this.label] = this.render();
       return true;
     }
     return false;
@@ -163,7 +177,7 @@ export class TabCache {
     return e.clientX > midx ? "after-tab" : "before-tab";
   }
 
-  render(): React.ReactElement {
+  render() {
     const { id, title, closable, cached, parent } = this.data;
     let { content } = this.data;
     let { onDragStart, onDragOver, onDrop, onDragLeave } = this;
@@ -176,7 +190,7 @@ export class TabCache {
     if (typeof content === "function") {
       content = content(this.data);
     }
-    const tab = (
+    const label = (
       <DragDropDiv
         getRef={this.getRef}
         onDragStartT={onDragStart}
@@ -193,12 +207,13 @@ export class TabCache {
         <div className="dock-tab-hit-area" ref={this.getHitAreaRef} />
       </DragDropDiv>
     );
-
-    return (
-      <DockTabPane key={id} cacheId={id} cached={cached} tab={tab}>
+    const _content = (
+      <DockTabPane key={id} cacheId={id} cached={cached} tab={label}>
         {content}
       </DockTabPane>
     );
+
+    return [_content, label];
   }
 
   destroy() {
@@ -261,44 +276,14 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
       // prevent the focus change logic
       e.stopPropagation();
     },
-    [context, panelData]
+    [context.dockMove, panelData]
   );
 
-  const addNewWindowMenu = React.useCallback(
-    (element: React.ReactElement, showWithLeftClick: boolean) => {
-      const onNewWindowClick = () =>
-        context.dockMove(panelData, null, "new-window");
+  const renderTabBar: RenderTabBar = React.useCallback(
+    (props, TabNavList) => {
+      const { panelLock, tabs, parent } = panelData;
+      let { panelExtra, maximizable, newWindow } = tabGroup;
 
-      const nativeMenu = (
-        <Menu onClick={onNewWindowClick}>
-          <MenuItem>New Window</MenuItem>
-        </Menu>
-      );
-
-      return (
-        <Dropdown
-          prefixCls="dock-dropdown"
-          overlay={nativeMenu}
-          trigger={
-            showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
-          }
-          mouseEnterDelay={0.1}
-          mouseLeaveDelay={0.1}
-        >
-          {element}
-        </Dropdown>
-      );
-    },
-    [context, panelData]
-  );
-
-  const renderTabBar = React.useCallback(
-    (props: any, TabNavList: React.ComponentType) => {
-      const { panelLock } = panelData;
-      const group = tabGroup;
-      let { panelExtra } = group;
-
-      let maximizable = group.maximizable;
       if (panelData.parent.mode === "window") {
         onPanelDragStart = null;
         maximizable = false;
@@ -311,15 +296,13 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
       }
 
       const onCloseAll = () => {
-        for (const tab of panelData.tabs) {
+        for (const tab of tabs) {
           context.dockMove(tab, null, "remove");
         }
       };
 
       const showNewWindowButton =
-        group.newWindow &&
-        isWindowBoxEnabled() &&
-        panelData.parent.mode === "float";
+        newWindow && isWindowBoxEnabled() && parent.mode === "float";
 
       let panelExtraContent: React.ReactElement;
       if (panelExtra) {
@@ -328,7 +311,7 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
         let maxBtn = (
           <div
             className={
-              panelData.parent.mode === "maximize"
+              parent.mode === "maximize"
                 ? "dock-panel-min-btn"
                 : "dock-panel-max-btn"
             }
@@ -336,12 +319,37 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
           />
         );
         if (showNewWindowButton) {
+          const addNewWindowMenu = (
+            element: React.ReactElement,
+            showWithLeftClick: boolean
+          ) => {
+            const onNewWindowClick = () =>
+              context.dockMove(panelData, null, "new-window");
+
+            const nativeMenu = (
+              <Menu onClick={onNewWindowClick}>
+                <MenuItem>New Window</MenuItem>
+              </Menu>
+            );
+
+            return (
+              <Dropdown
+                prefixCls="dock-dropdown"
+                overlay={nativeMenu}
+                trigger={
+                  showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
+                }
+                mouseEnterDelay={0.1}
+                mouseLeaveDelay={0.1}
+              >
+                {element}
+              </Dropdown>
+            );
+          };
+
           maxBtn = addNewWindowMenu(maxBtn, !maximizable);
         }
-        if (
-          panelData.parent.mode === "float" &&
-          !panelData.tabs.find((tab) => !tab.closable)
-        ) {
+        if (parent.mode === "float" && !tabs.find((tab) => !tab.closable)) {
           panelExtraContent = (
             <>
               {maxBtn}
@@ -359,13 +367,20 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
           onDragMove={onPanelDragMove}
           onDragEnd={onPanelDragEnd}
           TabNavList={TabNavList}
-          isMaximized={panelData.parent.mode === "maximize"}
+          isMaximized={parent.mode === "maximize"}
           {...props}
           extra={panelExtraContent}
         />
       );
     },
-    []
+    [
+      panelData,
+      tabGroup,
+      onPanelDragStart,
+      onPanelDragEnd,
+      onPanelDragMove,
+      context,
+    ]
   );
 
   const onTabChange = React.useCallback(
@@ -374,7 +389,7 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
       context.onSilentChange(activeId, "active");
       forceUpdate();
     },
-    [props.panelData, context, forceUpdate]
+    [props.panelData, context.onSilentChange, forceUpdate]
   );
 
   let { animated, moreIcon } = tabGroup;
@@ -385,22 +400,22 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
     moreIcon = "...";
   }
 
-  const children: React.ReactNode[] = [];
-  for (const [, tab] of cache) {
-    children.push(tab.content);
-  }
+  const items: Tab[] = [...cache.entries()].map(([key, cache]) => ({
+    key,
+    label: cache.label,
+    children: cache.content,
+  }));
 
   return (
     <Tabs
       prefixCls="dock"
-      moreIcon={moreIcon}
+      more={{ icon: moreIcon }}
       animated={animated}
       renderTabBar={renderTabBar}
       activeKey={activeId}
       onChange={onTabChange}
       popupClassName={classNames(groupClassNames(group))}
-    >
-      {children}
-    </Tabs>
+      items={items}
+    />
   );
 });

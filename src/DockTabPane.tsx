@@ -1,7 +1,7 @@
 import classNames from "classnames";
-import { TabPaneProps } from "rc-tabs";
+import { TabPaneProps } from "rc-tabs/lib/TabPanelList/TabPane";
 import * as React from "react";
-import { TabPaneCache, useDockContext } from "./DockData";
+import { TabPaneCache } from "./DockData";
 import { useDockPortalManager } from "./DockPortalManager";
 
 interface DockTabPaneProps extends TabPaneProps {

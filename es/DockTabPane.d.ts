@@ -1,4 +1,4 @@
-import { TabPaneProps } from "rc-tabs";
+import { TabPaneProps } from "rc-tabs/lib/TabPanelList/TabPane";
 import * as React from "react";
 interface DockTabPaneProps extends TabPaneProps {
     cacheId?: string;
