@@ -4,14 +4,14 @@ import Menu, { MenuItem } from "rc-menu";
 import Tabs from "rc-tabs";
 import * as React from "react";
 import { getFloatPanelSize } from "./Algorithm";
-import { useDockContext, } from "./DockData";
+import { useDockContext } from "./DockData";
 import { DockTabBar } from "./DockTabBar";
-import DockTabPane from "./DockTabPane";
 import { DragDropDiv } from "./dragdrop/DragDropDiv";
 import * as DragManager from "./dragdrop/DragManager";
+import { useForceUpdate } from "./UseForceUpdate";
 import { groupClassNames } from "./Utils";
 import { isWindowBoxEnabled } from "./WindowBox";
-import { useForceUpdate } from "./UseForceUpdate";
+import DockTabPane, { getStyles } from "./DockTabPane";
 function findParentPanel(element) {
     for (let i = 0; i < 10; ++i) {
         if (!element) {
@@ -30,175 +30,11 @@ function isPopupDiv(r) {
         ((_a = r.parentElement) === null || _a === void 0 ? void 0 : _a.tagName) === "LI" ||
         ((_c = (_b = r.parentElement) === null || _b === void 0 ? void 0 : _b.parentElement) === null || _c === void 0 ? void 0 : _c.tagName) === "LI");
 }
-export class TabCache {
-    constructor(context) {
-        this.getRef = (r) => {
-            if (isPopupDiv(r)) {
-                return;
-            }
-            this._ref = r;
-        };
-        this.getHitAreaRef = (r) => {
-            if (isPopupDiv(r)) {
-                return;
-            }
-            this._hitAreaRef = r;
-        };
-        this.onCloseClick = (e) => {
-            this.context.dockMove(this.data, null, "remove");
-            e.stopPropagation();
-        };
-        this.onDragStart = (e) => {
-            const panel = this.data.parent;
-            if (panel.parent.mode === "float" && panel.tabs.length === 1) {
-                // when it's the only tab in a float panel, skip this drag, const parent tab bar handle it
-                return;
-            }
-            const panelElement = findParentPanel(this._ref);
-            const tabGroup = this.context.getGroup(this.data.group);
-            const [panelWidth, panelHeight] = getFloatPanelSize(panelElement, tabGroup);
-            e.setData({
-                tab: this.data,
-                panelSize: [panelWidth, panelHeight],
-                tabGroup: this.data.group,
-            }, this.context.getDockId());
-            e.startDrag(this._ref.parentElement, this._ref.parentElement);
-        };
-        this.onDragOver = (e) => {
-            var _a, _b;
-            const dockId = this.context.getDockId();
-            const tab = DragManager.DragState.getData("tab", dockId);
-            let panel = DragManager.DragState.getData("panel", dockId);
-            let group;
-            if (tab) {
-                panel = tab.parent;
-                group = tab.group;
-            }
-            else {
-                // drag whole panel
-                if (!panel) {
-                    return;
-                }
-                if (panel === null || panel === void 0 ? void 0 : panel.panelLock) {
-                    e.reject();
-                    return;
-                }
-                group = panel.group;
-            }
-            const tabGroup = this.context.getGroup(group);
-            if (group !== this.data.group) {
-                e.reject();
-            }
-            else if ((tabGroup === null || tabGroup === void 0 ? void 0 : tabGroup.floatable) === "singleTab" &&
-                ((_b = (_a = this.data.parent) === null || _a === void 0 ? void 0 : _a.parent) === null || _b === void 0 ? void 0 : _b.mode) === "float") {
-                e.reject();
-            }
-            else if (tab && tab !== this.data) {
-                const direction = this.getDropDirection(e);
-                this.context.setDropRect(this._hitAreaRef, direction, this);
-                e.accept("");
-            }
-            else if (panel && panel !== this.data.parent) {
-                const direction = this.getDropDirection(e);
-                this.context.setDropRect(this._hitAreaRef, direction, this);
-                e.accept("");
-            }
-        };
-        this.onDragLeave = (e) => {
-            this.context.setDropRect(null, "remove", this);
-        };
-        this.onDrop = (e) => {
-            const dockId = this.context.getDockId();
-            let panel;
-            const tab = DragManager.DragState.getData("tab", dockId);
-            if (tab) {
-                panel = tab.parent;
-            }
-            else {
-                panel = DragManager.DragState.getData("panel", dockId);
-            }
-            if (tab && tab !== this.data) {
-                const direction = this.getDropDirection(e);
-                this.context.dockMove(tab, this.data, direction);
-            }
-            else if (panel && panel !== this.data.parent) {
-                const direction = this.getDropDirection(e);
-                this.context.dockMove(panel, this.data, direction);
-            }
-        };
-        this.context = context;
-    }
-    setData(data) {
-        if (data !== this.data) {
-            this.data = data;
-            this.content = this.render();
-            return true;
-        }
-        return false;
-    }
-    getDropDirection(e) {
-        const rect = this._hitAreaRef.getBoundingClientRect();
-        const midx = rect.left + rect.width * 0.5;
-        return e.clientX > midx ? "after-tab" : "before-tab";
-    }
-    render() {
-        const { id, title, closable, cached, parent } = this.data;
-        let { content } = this.data;
-        let { onDragStart, onDragOver, onDrop, onDragLeave } = this;
-        if (parent.parent.mode === "window") {
-            onDragStart = null;
-            onDragOver = null;
-            onDrop = null;
-            onDragLeave = null;
-        }
-        if (typeof content === "function") {
-            content = content(this.data);
-        }
-        const tab = (React.createElement(DragDropDiv, { getRef: this.getRef, onDragStartT: onDragStart, role: "tab", "aria-selected": parent.activeId === id, onDragOverT: onDragOver, onDropT: onDrop, onDragLeaveT: onDragLeave },
-            title,
-            closable ? (React.createElement("div", { className: "dock-tab-close-btn", onClick: this.onCloseClick })) : null,
-            React.createElement("div", { className: "dock-tab-hit-area", ref: this.getHitAreaRef })));
-        return (React.createElement(DockTabPane, { key: id, cacheId: id, cached: cached, tab: tab }, content));
-    }
-    destroy() {
-        // place holder
-    }
-}
 export const DockTabs = React.memo(function DockTabBase(props) {
     let { panelData, onPanelDragStart, onPanelDragEnd, onPanelDragMove } = props;
     const { group, tabs, activeId } = panelData;
     const forceUpdate = useForceUpdate();
     const context = useDockContext();
-    const [cache, setCache] = React.useState(new Map());
-    React.useEffect(() => {
-        // updateTabs
-        setCache((prev) => {
-            const newCache = new Map();
-            let reused = 0;
-            for (const tabData of tabs) {
-                const { id } = tabData;
-                if (prev.has(id)) {
-                    const tab = prev.get(id);
-                    newCache.set(id, tab);
-                    tab.setData(tabData);
-                    ++reused;
-                }
-                else {
-                    const tab = new TabCache(context);
-                    newCache.set(id, tab);
-                    tab.setData(tabData);
-                }
-            }
-            if (reused !== prev.size) {
-                for (const [id, tab] of prev) {
-                    if (!newCache.has(id)) {
-                        tab.destroy();
-                    }
-                }
-            }
-            return newCache;
-        });
-    }, [context, tabs]);
     const tabGroup = context.getGroup(group);
     const renderTabBar = React.useCallback((props, TabNavList) => {
         const { panelLock } = panelData;
@@ -275,9 +111,144 @@ export const DockTabs = React.memo(function DockTabBase(props) {
     if (!moreIcon) {
         moreIcon = "...";
     }
-    const children = [];
-    for (const [, tab] of cache) {
-        children.push(tab.content);
-    }
-    return (React.createElement(Tabs, { prefixCls: "dock", moreIcon: moreIcon, animated: animated, renderTabBar: renderTabBar, activeKey: activeId, onChange: onTabChange, popupClassName: classNames(groupClassNames(group)) }, children));
+    const items = React.useMemo(() => {
+        return tabs.map((tab) => {
+            const { id, content, cached } = tab;
+            const children = typeof content === "function" ? content(tab) : content;
+            const active = activeId === id;
+            return {
+                key: id,
+                label: React.createElement(TabLabel, { data: tab }),
+                children: (React.createElement(DockTabPane, { id: id, cached: cached, active: active }, children)),
+                style: getStyles(active, true),
+            };
+        });
+    }, [tabs, activeId]);
+    return (React.createElement(Tabs, { prefixCls: "dock", more: { icon: moreIcon }, animated: animated, renderTabBar: renderTabBar, activeKey: activeId, onChange: onTabChange, popupClassName: classNames(groupClassNames(group)), items: items }));
+});
+const TabLabel = React.memo(function _TabLabel({ data }) {
+    const [_ref, setRef] = React.useState(null);
+    const [_hitAreaRef, setHitAreaRef] = React.useState(null);
+    const context = useDockContext();
+    const getRef = React.useCallback((_r) => {
+        if (isPopupDiv(_r)) {
+            return;
+        }
+        setRef(_r);
+    }, []);
+    const getHitAreaRef = React.useCallback((_r) => {
+        if (isPopupDiv(_r)) {
+            return;
+        }
+        setHitAreaRef(_r);
+    }, []);
+    const onCloseClick = React.useCallback((e) => {
+        context.dockMove(data, null, "remove");
+        e.stopPropagation();
+    }, [data, context.dockMove]);
+    const onDragStart = React.useCallback((e) => {
+        if (!_ref)
+            return;
+        const panel = data.parent;
+        if (panel.parent.mode === "float" && panel.tabs.length === 1) {
+            // when it's the only tab in a float panel, skip this drag, const parent tab bar handle it
+            return;
+        }
+        const panelElement = findParentPanel(_ref);
+        const tabGroup = context.getGroup(data.group);
+        const [panelWidth, panelHeight] = getFloatPanelSize(panelElement, tabGroup);
+        e.setData({
+            tab: data,
+            panelSize: [panelWidth, panelHeight],
+            tabGroup: data.group,
+        }, context.getDockId());
+        e.startDrag(_ref.parentElement, _ref.parentElement);
+    }, [_ref, data, context.getGroup, context.getDockId]);
+    const getDropDirection = React.useCallback((e) => {
+        if (!_hitAreaRef)
+            return;
+        const rect = _hitAreaRef.getBoundingClientRect();
+        const midx = rect.left + rect.width * 0.5;
+        return e.clientX > midx ? "after-tab" : "before-tab";
+    }, [_hitAreaRef]);
+    const onDragOver = React.useCallback((e) => {
+        var _a, _b;
+        if (!_ref || !_hitAreaRef)
+            return;
+        const dockId = context.getDockId();
+        const tab = DragManager.DragState.getData("tab", dockId);
+        let panel = DragManager.DragState.getData("panel", dockId);
+        let group;
+        if (tab) {
+            panel = tab.parent;
+            group = tab.group;
+        }
+        else {
+            // drag whole panel
+            if (!panel) {
+                return;
+            }
+            if (panel === null || panel === void 0 ? void 0 : panel.panelLock) {
+                e.reject();
+                return;
+            }
+            group = panel.group;
+        }
+        const tabGroup = context.getGroup(group);
+        if (group !== data.group) {
+            e.reject();
+        }
+        else if ((tabGroup === null || tabGroup === void 0 ? void 0 : tabGroup.floatable) === "singleTab" &&
+            ((_b = (_a = data.parent) === null || _a === void 0 ? void 0 : _a.parent) === null || _b === void 0 ? void 0 : _b.mode) === "float") {
+            e.reject();
+        }
+        else if (tab && tab !== data) {
+            const direction = getDropDirection(e);
+            context.setDropRect(_hitAreaRef, direction, _ref);
+            e.accept("");
+        }
+        else if (panel && panel !== data.parent) {
+            const direction = getDropDirection(e);
+            context.setDropRect(_hitAreaRef, direction, _ref);
+            e.accept("");
+        }
+    }, [
+        _hitAreaRef,
+        _ref,
+        data,
+        context.getGroup,
+        context.getDockId,
+        context.setDropRect,
+        getDropDirection,
+    ]);
+    const onDragLeave = React.useCallback((e) => {
+        if (!_ref)
+            return;
+        context.setDropRect(null, "remove", _ref);
+    }, [_ref]);
+    const onDrop = React.useCallback((e) => {
+        const dockId = context.getDockId();
+        let panel;
+        const tab = DragManager.DragState.getData("tab", dockId);
+        if (tab) {
+            panel = tab.parent;
+        }
+        else {
+            panel = DragManager.DragState.getData("panel", dockId);
+        }
+        if (tab && tab !== data) {
+            const direction = getDropDirection(e);
+            context.dockMove(tab, data, direction);
+        }
+        else if (panel && panel !== data.parent) {
+            const direction = getDropDirection(e);
+            context.dockMove(panel, data, direction);
+        }
+    }, [data, context.getDockId, context.dockMove, getDropDirection]);
+    const { id, title, closable, parent } = data;
+    const isInWindowPanel = parent.parent.mode === "window";
+    return (React.createElement(DragDropDiv, { getRef: getRef, role: "tab", "aria-selected": parent.activeId === id, onDragStartT: isInWindowPanel ? null : onDragStart, onDragOverT: isInWindowPanel ? null : onDragOver, onDropT: isInWindowPanel ? null : onDrop, onDragLeaveT: isInWindowPanel ? null : onDragLeave },
+        title,
+        closable ? (React.createElement("div", { className: "dock-tab-close-btn", onClick: onCloseClick })) : null,
+        React.createElement("div", { className: "dock-tab-hit-area", ref: getHitAreaRef })));
 });
