@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import Dropdown from "rc-dropdown";
 import Menu, { MenuItem } from "rc-menu";
-import Tabs from "rc-tabs";
+import Tabs, { TabsProps } from "rc-tabs";
 import * as React from "react";
 import { getFloatPanelSize } from "./Algorithm";
 import {
@@ -255,45 +255,8 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
 
   const tabGroup = context.getGroup(group);
 
-  const onMaximizeClick = React.useCallback(
-    (e: React.MouseEvent) => {
-      context.dockMove(panelData, null, "maximize");
-      // prevent the focus change logic
-      e.stopPropagation();
-    },
-    [context, panelData]
-  );
-
-  const addNewWindowMenu = React.useCallback(
-    (element: React.ReactElement, showWithLeftClick: boolean) => {
-      const onNewWindowClick = () =>
-        context.dockMove(panelData, null, "new-window");
-
-      const nativeMenu = (
-        <Menu onClick={onNewWindowClick}>
-          <MenuItem>New Window</MenuItem>
-        </Menu>
-      );
-
-      return (
-        <Dropdown
-          prefixCls="dock-dropdown"
-          overlay={nativeMenu}
-          trigger={
-            showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
-          }
-          mouseEnterDelay={0.1}
-          mouseLeaveDelay={0.1}
-        >
-          {element}
-        </Dropdown>
-      );
-    },
-    [context, panelData]
-  );
-
-  const renderTabBar = React.useCallback(
-    (props: any, TabNavList: React.ComponentType) => {
+  const renderTabBar: TabsProps["renderTabBar"] = React.useCallback(
+    (props, TabNavList) => {
       const { panelLock } = panelData;
       const group = tabGroup;
       let { panelExtra } = group;
@@ -325,6 +288,12 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
       if (panelExtra) {
         panelExtraContent = panelExtra(panelData, context);
       } else if (maximizable || showNewWindowButton) {
+        const onMaximizeClick = (e: React.MouseEvent) => {
+          context.dockMove(panelData, null, "maximize");
+          // prevent the focus change logic
+          e.stopPropagation();
+        };
+
         let maxBtn = (
           <div
             className={
@@ -336,6 +305,34 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
           />
         );
         if (showNewWindowButton) {
+          const addNewWindowMenu = (
+            element: React.ReactElement,
+            showWithLeftClick: boolean
+          ) => {
+            const onNewWindowClick = () =>
+              context.dockMove(panelData, null, "new-window");
+
+            const nativeMenu = (
+              <Menu onClick={onNewWindowClick}>
+                <MenuItem>New Window</MenuItem>
+              </Menu>
+            );
+
+            return (
+              <Dropdown
+                prefixCls="dock-dropdown"
+                overlay={nativeMenu}
+                trigger={
+                  showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
+                }
+                mouseEnterDelay={0.1}
+                mouseLeaveDelay={0.1}
+              >
+                {element}
+              </Dropdown>
+            );
+          };
+
           maxBtn = addNewWindowMenu(maxBtn, !maximizable);
         }
         if (
@@ -365,7 +362,14 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
         />
       );
     },
-    []
+    [
+      panelData,
+      tabGroup,
+      context,
+      onPanelDragStart,
+      onPanelDragEnd,
+      onPanelDragMove,
+    ]
   );
 
   const onTabChange = React.useCallback(
@@ -374,7 +378,7 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
       context.onSilentChange(activeId, "active");
       forceUpdate();
     },
-    [props.panelData, context, forceUpdate]
+    [props.panelData, context.onSilentChange, forceUpdate]
   );
 
   let { animated, moreIcon } = tabGroup;
