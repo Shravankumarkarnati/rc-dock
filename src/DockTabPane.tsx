@@ -26,10 +26,10 @@ const DockTabPane = React.memo(function DockTabPaneBase(
     tabKey,
   } = props;
 
-  const _children = shouldRender(
+  const _children = useShouldRender(
     active,
-    destroyInactiveTabPane,
     forceRender,
+    destroyInactiveTabPane,
     cached
   )
     ? children
@@ -84,23 +84,23 @@ const getStyles = (
 };
 
 // most complicated logic ever
-const shouldRender = (
+const useShouldRender = (
   active: boolean,
-  destroyInactiveTabPane: boolean,
   forceRender: boolean,
+  destroyInactiveTabPane: boolean,
   cached?: boolean
 ) => {
-  let visited = false;
+  const visited = React.useRef<boolean | undefined>();
 
   if (active) {
-    visited = true;
+    visited.current = true;
   } else if (destroyInactiveTabPane) {
-    visited = false;
+    visited.current = false;
   }
 
   // when cached == undefined, it will still cache the children inside tabs component, but not across whole dock layout
   // when cached == false, children are destroyed when not active
-  const isRender = cached === false ? active : visited;
+  const isRender = cached === false ? active : visited.current;
 
   let renderChildren = false;
   if (cached) {
@@ -109,7 +109,7 @@ const shouldRender = (
     renderChildren = true;
   }
 
-  if (active || visited || forceRender) {
+  if (active || visited.current || forceRender) {
     return renderChildren;
   }
 
