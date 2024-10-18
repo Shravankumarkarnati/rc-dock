@@ -13,7 +13,7 @@ import { useForceUpdate } from "./UseForceUpdate";
 import { createPortal } from "react-dom";
 import * as React from "react";
 const DockPortalManagerContext = React.createContext(null);
-export const DockPortalManager = ({ children, }) => {
+export const DockPortalManager = ({ children }) => {
     const _caches = React.useRef(new Map());
     const _pendingDestroy = React.useRef();
     const forceUpdate = useForceUpdate();
@@ -92,8 +92,9 @@ export const DockCachedTabPortal = React.memo(function _DockCachedTabPortal(_a) 
     }, [cached, content, id, ref, removeTabCache, updateTabCache]);
     React.useEffect(() => {
         return () => {
-            if (ref && _cache.current.id)
+            if (ref && _cache.current.id) {
                 removeTabCache(_cache.current.id, ref);
+            }
         };
     }, []);
     return (React.createElement("div", Object.assign({}, props, { ref: cached ? setRef : null, id: id }), children));

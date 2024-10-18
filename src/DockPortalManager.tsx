@@ -14,11 +14,7 @@ type Context = {
 
 const DockPortalManagerContext = React.createContext<Context>(null!);
 
-export const DockPortalManager = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const DockPortalManager = ({ children }: Pick<Props, "children">) => {
   const _caches = React.useRef(new Map<string, TabPaneCache>());
   const _pendingDestroy = React.useRef<any>();
 
@@ -93,7 +89,7 @@ export const DockPortalManager = ({
 
 type Props = {
   id: string;
-  cached: boolean;
+  cached?: boolean;
   content: React.ReactNode;
 } & Omit<JSX.IntrinsicElements["div"], "id" | "ref">;
 
@@ -142,7 +138,9 @@ export const DockCachedTabPortal = React.memo(function _DockCachedTabPortal({
 
   React.useEffect(() => {
     return () => {
-      if (ref && _cache.current.id) removeTabCache(_cache.current.id, ref);
+      if (ref && _cache.current.id) {
+        removeTabCache(_cache.current.id, ref);
+      }
     };
   }, []);
 

@@ -5,7 +5,7 @@ import { DockCachedTabPortal } from "./DockPortalManager";
 
 interface DockTabPaneProps extends TabPaneProps {
   cacheId?: string;
-  cached: boolean;
+  cached?: boolean;
 }
 
 const DockTabPane = React.memo(function DockTabPaneBase(
@@ -26,14 +26,49 @@ const DockTabPane = React.memo(function DockTabPaneBase(
     tabKey,
   } = props;
 
-  let visited = false;
+  const _children = shouldRender(
+    active,
+    destroyInactiveTabPane,
+    forceRender,
+    cached
+  )
+    ? children
+    : null;
 
-  if (active) {
-    visited = true;
-  } else if (destroyInactiveTabPane) {
-    visited = false;
-  }
+  return (
+    <DockCachedTabPortal
+      id={cacheId}
+      content={children}
+      cached={cached}
+      role="tabpanel"
+      aria-labelledby={id && `${id}-tab-${tabKey}`}
+      aria-hidden={!active}
+      style={getStyles(active, animated, style)}
+      className={getClassNames(active, prefixCls, className)}
+    >
+      {_children}
+    </DockCachedTabPortal>
+  );
+});
 
+export default DockTabPane;
+
+const getClassNames = (
+  active: boolean,
+  prefixCls?: string,
+  className?: string
+) =>
+  classNames(
+    `${prefixCls}-tabpane`,
+    active && `${prefixCls}-tabpane-active`,
+    className
+  );
+
+const getStyles = (
+  active: boolean,
+  animated: boolean,
+  style: React.CSSProperties = {}
+) => {
   const mergedStyle: React.CSSProperties = {};
   if (!active) {
     if (animated) {
@@ -44,34 +79,39 @@ const DockTabPane = React.memo(function DockTabPaneBase(
       mergedStyle.display = "none";
     }
   }
+
+  return { ...mergedStyle, ...style };
+};
+
+// most complicated logic ever
+const shouldRender = (
+  active: boolean,
+  destroyInactiveTabPane: boolean,
+  forceRender: boolean,
+  cached?: boolean
+) => {
+  let visited = false;
+
+  if (active) {
+    visited = true;
+  } else if (destroyInactiveTabPane) {
+    visited = false;
+  }
+
   // when cached == undefined, it will still cache the children inside tabs component, but not across whole dock layout
   // when cached == false, children are destroyed when not active
   const isRender = cached === false ? active : visited;
-  let renderChildren: React.ReactNode = null;
+
+  let renderChildren = false;
   if (cached) {
-    renderChildren = null;
+    renderChildren = false;
   } else if (isRender || forceRender) {
-    renderChildren = children;
+    renderChildren = true;
   }
 
-  return (
-    <DockCachedTabPortal
-      id={cacheId}
-      content={children}
-      cached={cached}
-      role="tabpanel"
-      aria-labelledby={id && `${id}-tab-${tabKey}`}
-      aria-hidden={!active}
-      style={{ ...mergedStyle, ...style }}
-      className={classNames(
-        `${prefixCls}-tabpane`,
-        active && `${prefixCls}-tabpane-active`,
-        className
-      )}
-    >
-      {(active || visited || forceRender) && renderChildren}
-    </DockCachedTabPortal>
-  );
-});
+  if (active || visited || forceRender) {
+    return renderChildren;
+  }
 
-export default DockTabPane;
+  return false;
+};
