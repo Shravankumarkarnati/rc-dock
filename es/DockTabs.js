@@ -245,8 +245,11 @@ const TabLabel = React.memo(function _TabLabel({ data }) {
             context.dockMove(panel, data, direction);
         }
     }, [data, context.getDockId, context.dockMove, getDropDirection]);
-    const { id, title, closable, parent } = data;
+    let { id, title, closable, parent } = data;
     const isInWindowPanel = parent.parent.mode === "window";
+    if (typeof title === "function") {
+        title = title({ onClose: onCloseClick, id });
+    }
     return (React.createElement(DragDropDiv, { getRef: getRef, role: "tab", "aria-selected": parent.activeId === id, onDragStartT: isInWindowPanel ? null : onDragStart, onDragOverT: isInWindowPanel ? null : onDragOver, onDropT: isInWindowPanel ? null : onDrop, onDragLeaveT: isInWindowPanel ? null : onDragLeave },
         title,
         closable ? (React.createElement("div", { className: "dock-tab-close-btn", onClick: onCloseClick })) : null,

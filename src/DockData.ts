@@ -152,6 +152,9 @@ export interface PanelBase {
    * a locked panel can not be moved to float layer either
    */
   panelLock?: PanelLock; // if not null, panel won't disappear even when all children are gone
+
+  /** extra data, passed on to PanelData */
+  data?: Record<string, unknown>;
 }
 
 export interface BoxBase {
@@ -190,6 +193,13 @@ export interface BoxData extends BoxBase, BoxChild {
   children: (BoxData | PanelData)[];
 }
 
+export type DockTabTitle =
+  | React.ReactNode
+  | ((props: {
+      onClose: (e: React.MouseEvent) => void;
+      id: string;
+    }) => React.ReactNode);
+
 export interface TabData extends TabBase, DockDataBase {
   /**
    * - group defines style of the panel
@@ -203,7 +213,7 @@ export interface TabData extends TabBase, DockDataBase {
   /**
    * title that's shown in the tab of the panel header
    */
-  title: React.ReactChild;
+  title: DockTabTitle;
   content: React.ReactElement | ((tab: TabData) => React.ReactElement);
   closable?: boolean;
 

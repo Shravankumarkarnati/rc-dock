@@ -377,9 +377,13 @@ const TabLabel = React.memo(function _TabLabel({ data }: TabLabelProps) {
     [data, context.getDockId, context.dockMove, getDropDirection]
   );
 
-  const { id, title, closable, parent } = data;
+  let { id, title, closable, parent } = data;
 
   const isInWindowPanel = parent.parent.mode === "window";
+
+  if (typeof title === "function") {
+    title = title({ onClose: onCloseClick, id });
+  }
 
   return (
     <DragDropDiv

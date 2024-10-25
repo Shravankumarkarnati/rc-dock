@@ -49,14 +49,14 @@ export function saveLayoutData(layout, saveTab, afterPanelSaved) {
                 tabs.push(savedTab);
             }
         }
-        let { id, size, activeId, group, panelLock } = panelData;
+        let { id, size, activeId, group, panelLock, data } = panelData;
         let savedPanel;
         if (panelData.parent.mode === 'float' || panelData.parent.mode === 'window') {
             let { x, y, z, w, h } = panelData;
-            savedPanel = { id, size, tabs, group, activeId, panelLock, x, y, z, w, h };
+            savedPanel = { id, size, tabs, group, activeId, panelLock, x, y, z, w, h, data };
         }
         else {
-            savedPanel = { id, size, tabs, group, activeId, panelLock };
+            savedPanel = { id, size, tabs, group, activeId, panelLock, data };
         }
         if (afterPanelSaved) {
             afterPanelSaved(savedPanel, panelData);
@@ -97,7 +97,7 @@ export function loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLo
         return null;
     }
     function loadPanelData(savedPanel) {
-        let { id, size, activeId, x, y, z, w, h, group, panelLock } = savedPanel;
+        let { id, size, activeId, x, y, z, w, h, group, panelLock, data } = savedPanel;
         let tabs = [];
         for (let savedTab of savedPanel.tabs) {
             let tabData = loadTabData(savedTab);
@@ -107,10 +107,10 @@ export function loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLo
         }
         let panelData;
         if (w || h || x || y || z) {
-            panelData = { id, size, activeId, group, x, y, z, w, h, tabs, panelLock };
+            panelData = { id, size, activeId, group, x, y, z, w, h, tabs, panelLock, data };
         }
         else {
-            panelData = { id, size, activeId, group, tabs, panelLock };
+            panelData = { id, size, activeId, group, tabs, panelLock, data };
         }
         if (savedPanel.id === maximePlaceHolderId) {
             panelData.panelLock = {};
