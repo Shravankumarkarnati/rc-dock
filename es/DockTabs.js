@@ -124,9 +124,7 @@ export const DockTabs = React.memo(function DockTabBase(props) {
             style: getStyles(active, tabPaneAnimated),
         };
     });
-    return (React.createElement(Tabs, { prefixCls: "dock", more: { icon: moreIcon }, 
-        // TODO: make animation work
-        animated: { inkBar: animated, tabPane: tabPaneAnimated }, renderTabBar: renderTabBar, activeKey: activeId, onChange: onTabChange, popupClassName: classNames(groupClassNames(group)), items: items }));
+    return (React.createElement(Tabs, { prefixCls: "dock", more: { icon: moreIcon }, animated: { inkBar: animated, tabPane: tabPaneAnimated }, renderTabBar: renderTabBar, activeKey: activeId, onChange: onTabChange, popupClassName: classNames(groupClassNames(group)), items: items }));
 });
 const TabLabel = React.memo(function _TabLabel({ data }) {
     const [_ref, setRef] = React.useState(null);

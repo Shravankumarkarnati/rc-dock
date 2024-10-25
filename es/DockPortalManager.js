@@ -50,6 +50,9 @@ export const DockPortalManager = ({ children }) => {
         else {
             cache.owner = owner;
         }
+        if (cache.portal && cache.portal.children === children) {
+            return cache;
+        }
         cache.portal = createPortal(children, cache.div, cache.id);
         _caches.current.set(id, cache);
         forceUpdate();
