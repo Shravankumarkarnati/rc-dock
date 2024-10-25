@@ -149,7 +149,12 @@ export const DockCachedTabPortal = React.memo(function _DockCachedTabPortal({
   }, []);
 
   return (
-    <div {...props} ref={cached ? setRef : null} id={id}>
+    <div
+      {...props}
+      ref={cached ? setRef : null}
+      id={id}
+      className="dock-pane-cache-container"
+    >
       {children}
     </div>
   );

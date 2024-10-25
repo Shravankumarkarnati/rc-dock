@@ -167,6 +167,16 @@ const DockLayoutBase = React.forwardRef<DockRef, LayoutProps>(
       }
     });
 
+    // update layout in controlled layout
+    React.useEffect(() => {
+      setState((prev) => {
+        if (layout && layout !== prev.layout.loadedFrom) {
+          return { ...prev, layout: loadLayoutData(layout, props) };
+        }
+        return prev;
+      });
+    }, [layout]);
+
     /** @ignore
      * layout state doesn't change instantly after setState, use this to make sure the correct layout is
      */
