@@ -187,31 +187,32 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
     moreIcon = "...";
   }
 
-  const items: Tab[] = React.useMemo(() => {
-    return tabs.map((tab) => {
-      const { id, content, cached } = tab;
-      const children = typeof content === "function" ? content(tab) : content;
+  // TODO: make animation work
+  const tabPaneAnimated = false;
 
-      const active = activeId === id;
+  const items: Tab[] = tabs.map((tab) => {
+    const { id, content, cached } = tab;
+    const children = typeof content === "function" ? content(tab) : content;
 
-      return {
-        key: id,
-        label: <TabLabel data={tab} />,
-        children: (
-          <DockTabPane id={id} cached={cached} active={active}>
-            {children}
-          </DockTabPane>
-        ),
-        style: getStyles(active, true),
-      };
-    });
-  }, [tabs, activeId]);
+    const active = activeId === id;
+
+    return {
+      key: id,
+      label: <TabLabel data={tab} />,
+      children: (
+        <DockTabPane id={id} cached={cached} active={active}>
+          {children}
+        </DockTabPane>
+      ),
+      style: getStyles(active, tabPaneAnimated),
+    };
+  });
 
   return (
     <Tabs
       prefixCls="dock"
       more={{ icon: moreIcon }}
-      animated={animated}
+      animated={{ inkBar: animated, tabPane: tabPaneAnimated }}
       renderTabBar={renderTabBar}
       activeKey={activeId}
       onChange={onTabChange}

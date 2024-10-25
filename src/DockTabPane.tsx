@@ -51,11 +51,7 @@ export const getStyles = (
 };
 
 // most complicated logic ever
-const useShouldRender = (
-  active: boolean,
-
-  cached?: boolean
-) => {
+const useShouldRender = (active: boolean, cached?: boolean) => {
   const visited = React.useRef<boolean | undefined>();
 
   if (active) {
