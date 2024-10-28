@@ -34,6 +34,36 @@ function isPopupDiv(r: HTMLDivElement): boolean {
   );
 }
 
+type AddNewWindowMenuProps = {
+  children: React.ReactElement;
+  showWithLeftClick: boolean;
+  panelData: PanelData;
+};
+
+const AddNewWindowMenu = React.memo(function _AddNewWindowMenu({
+  children,
+  showWithLeftClick,
+  panelData,
+}: AddNewWindowMenuProps) {
+  const { dockMove } = useDockContext();
+
+  return (
+    <Dropdown
+      prefixCls="dock-dropdown"
+      overlay={
+        <Menu onClick={() => dockMove(panelData, null, "new-window")}>
+          <MenuItem>New Window</MenuItem>
+        </Menu>
+      }
+      trigger={showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]}
+      mouseEnterDelay={0.1}
+      mouseLeaveDelay={0.1}
+    >
+      {children}
+    </Dropdown>
+  );
+});
+
 type Tab = TabsProps["items"][0];
 
 interface Props {
@@ -71,12 +101,6 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
         }
       }
 
-      const onCloseAll = () => {
-        for (const tab of panelData.tabs) {
-          context.dockMove(tab, null, "remove");
-        }
-      };
-
       const showNewWindowButton =
         group.newWindow &&
         isWindowBoxEnabled() &&
@@ -103,40 +127,25 @@ export const DockTabs = React.memo(function DockTabBase(props: Props) {
           />
         );
         if (showNewWindowButton) {
-          const addNewWindowMenu = (
-            element: React.ReactElement,
-            showWithLeftClick: boolean
-          ) => {
-            const onNewWindowClick = () =>
-              context.dockMove(panelData, null, "new-window");
-
-            const nativeMenu = (
-              <Menu onClick={onNewWindowClick}>
-                <MenuItem>New Window</MenuItem>
-              </Menu>
-            );
-
-            return (
-              <Dropdown
-                prefixCls="dock-dropdown"
-                overlay={nativeMenu}
-                trigger={
-                  showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"]
-                }
-                mouseEnterDelay={0.1}
-                mouseLeaveDelay={0.1}
-              >
-                {element}
-              </Dropdown>
-            );
-          };
-
-          maxBtn = addNewWindowMenu(maxBtn, !maximizable);
+          maxBtn = (
+            <AddNewWindowMenu
+              panelData={panelData}
+              showWithLeftClick={!maximizable}
+            >
+              {maxBtn}
+            </AddNewWindowMenu>
+          );
         }
         if (
           panelData.parent.mode === "float" &&
           !panelData.tabs.find((tab) => !tab.closable)
         ) {
+          const onCloseAll = () => {
+            for (const tab of panelData.tabs) {
+              context.dockMove(tab, null, "remove");
+            }
+          };
+
           panelExtraContent = (
             <>
               {maxBtn}

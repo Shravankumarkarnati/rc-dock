@@ -49,24 +49,21 @@ export const DockTabBar = (props: DockTabBarProps) => {
     ...restProps
   } = props;
 
-  const context = useDockContext();
+  const { navigateToPanel } = useDockContext();
 
-  const ref = React.useRef<HTMLDivElement>();
-  const getRef = (div: HTMLDivElement) => {
-    ref.current = div;
-  };
+  const [ref, setRef] = React.useState<null | HTMLDivElement>(null);
 
   const onKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key.startsWith("Arrow")) {
-        if (!checkLocalTabMove(e.key, ref.current) && !isMaximized) {
-          context.navigateToPanel(ref.current, e.key);
+      if (ref && e.key.startsWith("Arrow")) {
+        if (!checkLocalTabMove(e.key, ref) && !isMaximized) {
+          navigateToPanel(ref, e.key);
         }
         e.stopPropagation();
         e.preventDefault();
       }
     },
-    [context, isMaximized]
+    [navigateToPanel, isMaximized]
   );
 
   return (
@@ -77,7 +74,7 @@ export const DockTabBar = (props: DockTabBarProps) => {
       role="tablist"
       className="dock-bar"
       onKeyDown={onKeyDown}
-      getRef={getRef}
+      getRef={setRef}
       tabIndex={-1}
     >
       <TabNavList {...restProps} />

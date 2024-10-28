@@ -30,6 +30,11 @@ function isPopupDiv(r) {
         ((_a = r.parentElement) === null || _a === void 0 ? void 0 : _a.tagName) === "LI" ||
         ((_c = (_b = r.parentElement) === null || _b === void 0 ? void 0 : _b.parentElement) === null || _c === void 0 ? void 0 : _c.tagName) === "LI");
 }
+const AddNewWindowMenu = React.memo(function _AddNewWindowMenu({ children, showWithLeftClick, panelData, }) {
+    const { dockMove } = useDockContext();
+    return (React.createElement(Dropdown, { prefixCls: "dock-dropdown", overlay: React.createElement(Menu, { onClick: () => dockMove(panelData, null, "new-window") },
+            React.createElement(MenuItem, null, "New Window")), trigger: showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"], mouseEnterDelay: 0.1, mouseLeaveDelay: 0.1 }, children));
+});
 export const DockTabs = React.memo(function DockTabBase(props) {
     let { panelData, onPanelDragStart, onPanelDragEnd, onPanelDragMove } = props;
     const { group, tabs, activeId } = panelData;
@@ -50,11 +55,6 @@ export const DockTabs = React.memo(function DockTabBase(props) {
                 panelExtra = panelLock.panelExtra;
             }
         }
-        const onCloseAll = () => {
-            for (const tab of panelData.tabs) {
-                context.dockMove(tab, null, "remove");
-            }
-        };
         const showNewWindowButton = group.newWindow &&
             isWindowBoxEnabled() &&
             panelData.parent.mode === "float";
@@ -72,16 +72,15 @@ export const DockTabs = React.memo(function DockTabBase(props) {
                     ? "dock-panel-min-btn"
                     : "dock-panel-max-btn", onClick: maximizable ? onMaximizeClick : null }));
             if (showNewWindowButton) {
-                const addNewWindowMenu = (element, showWithLeftClick) => {
-                    const onNewWindowClick = () => context.dockMove(panelData, null, "new-window");
-                    const nativeMenu = (React.createElement(Menu, { onClick: onNewWindowClick },
-                        React.createElement(MenuItem, null, "New Window")));
-                    return (React.createElement(Dropdown, { prefixCls: "dock-dropdown", overlay: nativeMenu, trigger: showWithLeftClick ? ["contextMenu", "click"] : ["contextMenu"], mouseEnterDelay: 0.1, mouseLeaveDelay: 0.1 }, element));
-                };
-                maxBtn = addNewWindowMenu(maxBtn, !maximizable);
+                maxBtn = (React.createElement(AddNewWindowMenu, { panelData: panelData, showWithLeftClick: !maximizable }, maxBtn));
             }
             if (panelData.parent.mode === "float" &&
                 !panelData.tabs.find((tab) => !tab.closable)) {
+                const onCloseAll = () => {
+                    for (const tab of panelData.tabs) {
+                        context.dockMove(tab, null, "remove");
+                    }
+                };
                 panelExtraContent = (React.createElement(React.Fragment, null,
                     maxBtn,
                     React.createElement("div", { className: "dock-tab-close-btn", onClick: onCloseAll })));
