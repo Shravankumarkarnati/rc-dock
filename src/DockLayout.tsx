@@ -81,12 +81,6 @@ export interface LayoutProps {
   loadTab?(tab: TabBase): TabData;
 
   /**
-   * return `true` to trigger a layout change. 
-   * @param panelData panel data of the panel clicked or focused on
-   */
-  onFocusOrClickWithinPanel?(panelData: PanelData): boolean | undefined
-
-  /**
    * modify the savedPanel, you can add additional data into the savedPanel
    */
   afterPanelSaved?(savedPanel: PanelBase, panel: PanelData): void;
@@ -617,16 +611,6 @@ export class DockLayout extends DockPortalManager implements DockContext {
     if (onLayoutChange) {
       let layout = this.getLayout();
       this.changeLayout(layout, currentTabId, direction, true);
-    }
-  }
-
-  onFocusOrClickWithinPanel(panelData: PanelData) {
-    const {onFocusOrClickWithinPanel: callback} = this.props;
-    if (callback) {
-      const shouldUpdate = callback(panelData);
-      if (shouldUpdate) {
-        this.onSilentChange(panelData.activeId, "active");
-      }
     }
   }
 

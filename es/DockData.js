@@ -5,9 +5,9 @@ export const defaultGroup = {
     maximizable: true,
 };
 /** @ignore */
-export const placeHolderStyle = 'place-holder';
+export const placeHolderStyle = "place-holder";
 /** @ignore */
-export const maximePlaceHolderId = '-maximized-placeholder-';
+export const maximePlaceHolderId = "-maximized-placeholder-";
 /** @ignore */
 export const placeHolderGroup = {
     floatable: false,
