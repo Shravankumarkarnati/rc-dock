@@ -62,6 +62,7 @@ export interface LayoutProps {
      * use dom element as the value, or use the element's id
      */
     maximizeTo?: string | HTMLElement;
+    onTabCacheUpdate?: (id: string) => void;
 }
 interface LayoutState {
     layout: LayoutData;

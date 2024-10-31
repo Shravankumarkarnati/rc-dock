@@ -99,6 +99,8 @@ export interface LayoutProps {
    * use dom element as the value, or use the element's id
    */
   maximizeTo?: string | HTMLElement;
+
+  onTabCacheUpdate?: (id: string) => void;
 }
 
 interface LayoutState {
@@ -165,6 +167,7 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
         return;
       }
       cache.portal = ReactDOM.createPortal(children, cache.div, cache.id);
+      this.props.onTabCacheUpdate?.(id);
       this.forceUpdate();
     }
   }
