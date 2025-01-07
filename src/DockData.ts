@@ -265,6 +265,7 @@ export interface TabPaneCache {
   div: HTMLDivElement;
   owner: any;
   portal?: React.ReactPortal;
+  pendingDestroy: boolean;
 }
 
 export interface LayoutData extends LayoutBase {
