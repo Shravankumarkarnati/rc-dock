@@ -137,11 +137,13 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
     let cache = this._caches.get(id);
     if (!cache) {
       let div = document.createElement('div');
+      let pendingDestroy = false;
       div.className = 'dock-pane-cache';
-      cache = {div, id, owner};
+      cache = {div, id, owner, pendingDestroy};
       this._caches.set(id, cache);
     } else {
       cache.owner = owner;
+      cache.pendingDestroy = false;
     }
 
     return cache;
@@ -152,6 +154,7 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
     let cache = this._caches.get(id);
     if (cache && cache.owner === owner) {
       cache.owner = null;
+      cache.pendingDestroy = true;
       if (!this._pendingDestroy) {
         // it could be reused by another component, so let's wait
         this._pendingDestroy = setTimeout(this.destroyRemovedPane, 1);
@@ -163,7 +166,7 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
   updateTabCache(id: string, children: React.ReactNode): void {
     let cache = this._caches.get(id);
     if (cache) {
-      if (Object.is(cache.portal?.children, children)) {
+      if (Object.is(cache.portal?.children, children) || cache.pendingDestroy) {
         return;
       }
       cache.portal = ReactDOM.createPortal(children, cache.div, cache.id);
