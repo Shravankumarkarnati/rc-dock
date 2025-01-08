@@ -143,6 +143,7 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
       this._caches.set(id, cache);
     } else {
       cache.owner = owner;
+      cache.pendingDestroy = false;
     }
 
     return cache;
