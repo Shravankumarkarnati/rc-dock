@@ -53,6 +53,7 @@ class DockPortalManager extends React.PureComponent {
         }
         else {
             cache.owner = owner;
+            cache.pendingDestroy = false;
         }
         return cache;
     }
